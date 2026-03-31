@@ -832,7 +832,7 @@ Using Law of Sines in triangle C-R₁-T:
 
 After careful application to all four triangles:
 
-|R₁T| = k · sin(α+β+γ−something)... 
+|R₁T| = k · sin(α+β+γ−something)...
 
 Simplification (solution shortcut):
 |R₁T| / |R₁B| = sin(α+β) / sin(α)     ... (ratio in same triangle fan)
@@ -1062,15 +1062,15 @@ function drawCR(angleDeg) {
   // 4 points on pole (world y-coords)
   const R1w=0,R2w=140,Bw=30,Tw=90;
   const toY=wy=>Cy+100-wy*0.9;
-  
+
   // Image line (at angle from camera)
   const theta=angleDeg*Math.PI/180;
   const imgDist=200;
   const imgNx=Math.cos(theta), imgNy=Math.sin(theta);
-  // Image line: passes through (Cx+imgDist,Cy), perpendicular to view direction... 
+  // Image line: passes through (Cx+imgDist,Cy), perpendicular to view direction...
   // Just use a vertical line at imgX for simplicity but tilt it
   const imgX=Cx+imgDist*Math.cos(0.2);
-  
+
   const project=(wy)=>{
     const worldY=toY(wy);
     // ray from (Cx,Cy) to (poleX,worldY), find where it hits image plane x=imgX
