@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 6 &mdash; Multiple View Geometry</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+
+:root{--bg:#06090f;--s1:#0c1219;--s2:#111a28;--s3:#162034;--bd:#1b2d44;--bd2:#233552;
+--c1:#38bdf8;--c2:#a78bfa;--c3:#fb923c;--c4:#34d399;--c5:#f472b6;--c6:#fbbf24;
+--tx:#d8e8f4;--dim:#7d9db5;--mt:#3f5a72;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-weight:300;line-height:1.78}
+.hero{max-width:1140px;margin:0 auto;padding:54px 44px 28px}
+.hero-tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--c1);text-transform:uppercase;margin-bottom:14px}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(2rem,4.5vw,3.2rem);font-weight:800;line-height:1.06;margin-bottom:10px}
+.hero h1 em{color:var(--c3);font-style:normal}
+.hero-sub{color:var(--dim);font-size:.95rem;max-width:660px}
+.sec-nav{max-width:1140px;margin:0 auto;padding:0 44px;display:flex;gap:0;border-bottom:1px solid var(--bd);overflow-x:auto}
+.sec-nav button{font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;padding:13px 20px;cursor:pointer;color:var(--mt);border:none;border-bottom:3px solid transparent;background:none;transition:.2s;white-space:nowrap}
+.sec-nav button.on{color:var(--c1);border-bottom-color:var(--c1)}
+.wrap{max-width:1140px;margin:0 auto;padding:38px 44px 80px}
+.section{display:none}.section.on{display:block}
+.sub-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:26px}
+.sub-btn{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:20px;cursor:pointer;transition:.2s;border:1px solid var(--bd);color:var(--mt);background:transparent}
+.sub-btn.on{background:var(--c1);color:#000;border-color:var(--c1)}
+.panel{display:none}.panel.on{display:block}
+.sh{font-family:'Syne',sans-serif;font-size:1.22rem;font-weight:700;border-bottom:1px solid var(--bd);padding-bottom:10px;margin-bottom:22px}
+.sh em{color:var(--c1);font-style:normal}
+.kicker{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--c3);margin-bottom:8px}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:13px;padding:24px 26px;margin-bottom:18px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.ca::before{background:var(--c1)}.cp::before{background:var(--c2)}.co::before{background:var(--c3)}.cg::before{background:var(--c4)}.ck::before{background:var(--c5)}.cy::before{background:var(--c6)}
+.card-t{font-family:'Syne',sans-serif;font-size:1.03rem;font-weight:700;margin-bottom:11px}
+.ca .card-t{color:var(--c1)}.cp .card-t{color:var(--c2)}.co .card-t{color:var(--c3)}.cg .card-t{color:var(--c4)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;margin:12px 0}
+.duo.w64{grid-template-columns:1.3fr .85fr}.duo.w46{grid-template-columns:.85fr 1.3fr}
+@media(max-width:720px){.duo,.duo.w64,.duo.w46{grid-template-columns:1fr}}
+.prose{font-size:.89rem;color:var(--dim);line-height:1.84}.prose strong{color:var(--tx)}
+.fig{background:var(--s2);border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+.fig svg{display:block;width:100%;height:auto}
+.figcap{font-family:'DM Mono',monospace;font-size:8px;color:var(--mt);text-align:center;padding:6px 10px;border-top:1px solid var(--bd)}
+.why{background:rgba(251,146,60,.05);border-left:3px solid var(--c3);border-radius:0 8px 8px 0;padding:10px 14px;margin:9px 0;font-size:.86rem;color:var(--dim)}.why strong{color:var(--c3)}
+.note{background:rgba(56,189,248,.05);border-left:3px solid var(--c1);border-radius:0 8px 8px 0;padding:10px 14px;margin:9px 0;font-size:.86rem;color:var(--dim)}.note strong{color:var(--c1)}
+.ok{background:rgba(52,211,153,.05);border-left:3px solid var(--c4);border-radius:0 8px 8px 0;padding:10px 14px;margin:9px 0;font-size:.86rem;color:var(--dim)}.ok strong{color:var(--c4)}
+.warn{background:rgba(244,114,182,.05);border-left:3px solid var(--c5);border-radius:0 8px 8px 0;padding:10px 14px;margin:9px 0;font-size:.86rem;color:var(--dim)}.warn strong{color:var(--c5)}
+.mth{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:12px 16px;font-family:'DM Mono',monospace;font-size:.82rem;line-height:2.1;margin:9px 0;overflow-x:auto}
+.mth .b{color:var(--c1)}.mth .o{color:var(--c3)}.mth .g{color:var(--c4)}.mth .p{color:var(--c2)}.mth .z{color:var(--mt);font-style:italic}
+.fbox{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:13px 18px;text-align:center;font-family:'DM Mono',monospace;font-size:.95rem;color:var(--c3);margin:11px 0}
+.chain{border-left:2px solid var(--bd2);margin:11px 0;padding-left:15px}
+.cstep{margin-bottom:9px;font-size:.86rem;color:var(--dim)}
+.clbl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--mt);text-transform:uppercase;margin-bottom:2px}
+.ceq{background:var(--s2);padding:5px 11px;border-radius:6px;font-family:'DM Mono',monospace;font-size:.82rem;display:inline-block;margin-top:2px}
+.steps{list-style:none;margin:9px 0}
+.steps li{display:flex;gap:11px;margin-bottom:12px;align-items:flex-start}
+.sn{flex-shrink:0;width:24px;height:24px;border-radius:50%;font-family:'DM Mono',monospace;font-size:10px;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.sb{background:var(--c1);color:#000}.so{background:var(--c3);color:#000}.sg{background:var(--c4);color:#000}.sp{background:var(--c2);color:#fff}
+.sd{font-size:.87rem;color:var(--dim)}.sd strong{color:var(--tx)}
+.mxr{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:9px 0;font-family:'DM Mono',monospace;font-size:.8rem}
+.mx{display:inline-grid;gap:2px 10px;background:var(--s2);border:1px solid var(--bd);border-radius:5px;padding:7px 11px;position:relative}
+.mx::before,.mx::after{content:'';position:absolute;top:5px;bottom:5px}
+.mx::before{left:-4px;border-left:2px solid var(--bd2);border-top:2px solid var(--bd2);border-bottom:2px solid var(--bd2)}
+.mx::after{right:-4px;border-right:2px solid var(--bd2);border-top:2px solid var(--bd2);border-bottom:2px solid var(--bd2)}
+.mx3{grid-template-columns:repeat(3,auto)}.mx1{grid-template-columns:auto}
+.mop{color:var(--mt);font-size:1.1rem}.mo{color:var(--c3)}.mg{color:var(--c4)}
+table{width:100%;border-collapse:collapse;font-size:.86rem;margin:11px 0}
+th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mt);text-align:left;padding:9px 12px;border-bottom:1px solid var(--bd)}
+td{padding:9px 12px;border-bottom:1px solid var(--bd);color:var(--dim)}
+.tb{color:var(--c1);font-family:'DM Mono',monospace}.tg{color:var(--c4);font-family:'DM Mono',monospace}.tp{color:var(--c5);font-family:'DM Mono',monospace}
+tr:hover td{background:var(--s2)}
+.sol-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:8px 16px;border-radius:7px;cursor:pointer;transition:.2s;border:1px solid var(--c1);color:var(--c1);background:transparent}
+.sol-btn:hover,.sol-btn.done{background:var(--c1);color:#000}
+.sol-body{display:none;background:rgba(56,189,248,.03);border:1px solid rgba(56,189,248,.15);border-radius:10px;padding:18px 20px;margin-top:11px}
+.sol-body.show{display:block}
+.sol-tag{font-family:'DM Mono',monospace;font-size:8.5px;letter-spacing:2px;color:var(--c1);text-transform:uppercase;margin-bottom:9px}
+.cw{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px;margin:11px 0}
+canvas{display:block;border-radius:6px;max-width:100%}
+.clab{font-family:'DM Mono',monospace;font-size:9px;color:var(--mt);text-align:center;margin-top:7px}
+input[type=range]{-webkit-appearance:none;height:4px;background:var(--bd);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--c1);cursor:pointer}
+.lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--mt);text-transform:uppercase;display:block;margin-bottom:4px}
+.vd{font-family:'DM Mono',monospace;font-size:12px;color:var(--c1)}
+.ctrls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin:11px 0}
+.dbar-bg{background:var(--s3);border-radius:6px;overflow:hidden;height:12px;margin:4px 0}
+.dbar-fill{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--c4),var(--c1));transition:width .4s}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:680px){.g2{grid-template-columns:1fr}}
+.badge{display:inline-block;font-family:'DM Mono',monospace;font-size:9px;padding:2px 9px;border-radius:20px;margin:2px}
+.ba{background:rgba(56,189,248,.1);color:var(--c1);border:1px solid rgba(56,189,248,.2)}
+.bo{background:rgba(251,146,60,.1);color:var(--c3);border:1px solid rgba(251,146,60,.2)}
+.bg{background:rgba(52,211,153,.1);color:var(--c4);border:1px solid rgba(52,211,153,.2)}
+.bp{background:rgba(167,139,250,.1);color:var(--c2);border:1px solid rgba(167,139,250,.2)}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--s1)}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag">ECE4076 / 5176 &middot; Computer Vision &middot; Week 6</div>
+  <h1>Multiple View Geometry<br>&amp; <em>3D Reconstruction</em></h1>
+  <p class="hero-sub">Background theory from lecture notes &middot; Step-by-step derivations with diagrams &middot; Full problem set walkthrough</p>
+</div>
+<div class="sec-nav">
+  <button class="on" onclick="goSec('bg',this)">&nbsp;&#128216; Background</button>
+  <button onclick="goSec('q1',this)">&#9312; Q1 &mdash; Essential Matrix</button>
+  <button onclick="goSec('q2',this)">&#9313; Q2 &mdash; Triangulating Depth</button>
+</div>
+<div class="wrap">
+
+<!-- ===================== BACKGROUND ===================== -->
+<div class="section on" id="sec-bg">
+<div class="sub-nav">
+  <button class="sub-btn on"  onclick="goPanel('bg','intro',this)">Why Two Cameras?</button>
+  <button class="sub-btn"     onclick="goPanel('bg','pq',this)">p&ndash;q Relationship</button>
+  <button class="sub-btn"     onclick="goPanel('bg','emat',this)">Essential Matrix</button>
+  <button class="sub-btn"     onclick="goPanel('bg','eight',this)">8-Point Algorithm</button>
+  <button class="sub-btn"     onclick="goPanel('bg','stereo',this)">Stereo &amp; Disparity</button>
+</div>
+
+<!-- BG: WHY TWO CAMERAS -->
+<div class="panel on" id="bg-intro">
+<div class="sh">Why Two Cameras? &mdash; <em>The Depth Ambiguity Problem</em></div>
+<div class="card ca">
+  <div class="card-t">A single camera loses depth information</div>
+  <div class="duo w64">
+    <div class="prose">
+      <p style="margin-bottom:10px">The pinhole camera model (lecture notes &sect;1) projects 3D point <strong>x&nbsp;=&nbsp;[x&#8321;,&nbsp;x&#8322;,&nbsp;x&#8323;]&sup1;</strong> to a 2D image using normalised coordinates (focal&nbsp;length&nbsp;=&nbsp;1):</p>
+      <div class="mth"><span class="b">p&#8321;</span>&nbsp;=&nbsp;x&#8321;&nbsp;/&nbsp;<span class="o">x&#8323;</span>&emsp;&emsp;<span class="b">p&#8322;</span>&nbsp;=&nbsp;x&#8322;&nbsp;/&nbsp;<span class="o">x&#8323;</span></div>
+      <div class="why"><strong>The problem:</strong> Depth x&#8323; appears in the denominator and cancels. Any point &lambda;&middot;[p&#8321;,&nbsp;p&#8322;,&nbsp;1]&sup1; maps to the same pixel regardless of &lambda;. You recover the <em>direction</em> only, not the distance.</div>
+      <ul class="steps" style="margin-top:12px">
+        <li><span class="sn sb">1</span><div class="sd"><strong>One camera:</strong> a ray from the optical centre through pixel p. Every point on that ray gives the same image pixel. Depth is lost.</div></li>
+        <li><span class="sn sg">2</span><div class="sd"><strong>Two cameras:</strong> each produces its own ray. The unique intersection of those rays is the 3D point X &mdash; this is <em>triangulation</em>.</div></li>
+      </ul>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 370 258" xmlns="http://www.w3.org/2000/svg">
+        <rect x="18" y="120" width="50" height="36" rx="4" fill="#1b2d44" stroke="#38bdf8" stroke-width="1.5"/>
+        <polygon points="68,120 94,108 94,170 68,158" fill="#162034" stroke="#38bdf8" stroke-width="1.5"/>
+        <text x="43" y="141" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">Cam 1</text>
+        <line x1="94" y1="100" x2="94" y2="180" stroke="#38bdf8" stroke-width="2.5"/>
+        <circle cx="94" cy="138" r="5" fill="#38bdf8"/>
+        <text x="107" y="142" font-family="DM Mono,monospace" font-size="9" fill="#38bdf8">p</text>
+        <line x1="94" y1="138" x2="346" y2="138" stroke="#38bdf8" stroke-width="1" stroke-dasharray="7,5"/>
+        <circle cx="172" cy="138" r="10" fill="#fb923c"/>
+        <text x="172" y="142" font-family="DM Mono,monospace" font-size="8" fill="#000" text-anchor="middle">X&#8321;</text>
+        <text x="172" y="162" font-family="DM Mono,monospace" font-size="8" fill="#fb923c" text-anchor="middle">near</text>
+        <circle cx="298" cy="138" r="10" fill="#a78bfa"/>
+        <text x="298" y="142" font-family="DM Mono,monospace" font-size="8" fill="#fff" text-anchor="middle">X&#8322;</text>
+        <text x="298" y="162" font-family="DM Mono,monospace" font-size="8" fill="#a78bfa" text-anchor="middle">far</text>
+        <path d="M172 126 C144 90 112 82 99 136" fill="none" stroke="#fb923c" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <polygon points="99,136 106,130 104,142" fill="#fb923c"/>
+        <path d="M298 126 C260 84 188 76 100 134" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <polygon points="100,134 108,128 106,140" fill="#a78bfa"/>
+        <rect x="116" y="42" width="142" height="22" rx="4" fill="#162034" stroke="#f472b6" stroke-width="1"/>
+        <text x="187" y="57" font-family="DM Mono,monospace" font-size="8" fill="#f472b6" text-anchor="middle">Both map to the same pixel p !</text>
+        <rect x="20" y="198" width="320" height="48" rx="5" fill="#111a28" stroke="#1b2d44"/>
+        <text x="180" y="215" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">p&#8321; = x&#8321;/x&#8323; , p&#8322; = x&#8322;/x&#8323;</text>
+        <text x="180" y="230" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">Different depths &#8594; same ratio &#8594; same pixel. Depth cancels.</text>
+      </svg>
+      <div class="figcap">X&#8321; (near) and X&#8322; (far) both project to identical pixel p &mdash; depth is lost</div>
+    </div>
+  </div>
+</div>
+<div class="card cg">
+  <div class="card-t">Two cameras &#8594; two rays &#8594; unique 3D intersection</div>
+  <div class="duo w46">
+    <div class="fig">
+      <svg viewBox="0 0 360 232" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="58" cy="196" r="8" fill="#38bdf8"/><text x="58" y="215" font-family="DM Mono,monospace" font-size="9" fill="#38bdf8" text-anchor="middle">O&#8321;</text>
+        <circle cx="302" cy="196" r="8" fill="#a78bfa"/><text x="302" y="215" font-family="DM Mono,monospace" font-size="9" fill="#a78bfa" text-anchor="middle">O&#8322;</text>
+        <line x1="66" y1="196" x2="294" y2="196" stroke="#1b2d44" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <text x="180" y="227" font-family="DM Mono,monospace" font-size="8" fill="#3f5a72" text-anchor="middle">baseline (t)</text>
+        <circle cx="180" cy="42" r="11" fill="#fb923c"/>
+        <text x="180" y="46" font-family="DM Mono,monospace" font-size="9" fill="#fff" text-anchor="middle">X</text>
+        <line x1="28" y1="148" x2="128" y2="148" stroke="#38bdf8" stroke-width="2"/>
+        <text x="78" y="138" font-family="DM Mono,monospace" font-size="7.5" fill="#38bdf8" text-anchor="middle">Cam 1 plane</text>
+        <line x1="232" y1="148" x2="332" y2="148" stroke="#a78bfa" stroke-width="2"/>
+        <text x="282" y="138" font-family="DM Mono,monospace" font-size="7.5" fill="#a78bfa" text-anchor="middle">Cam 2 plane</text>
+        <line x1="58" y1="196" x2="173" y2="50" stroke="#38bdf8" stroke-width="2.5"/>
+        <line x1="302" y1="196" x2="188" y2="50" stroke="#a78bfa" stroke-width="2.5"/>
+        <circle cx="84" cy="148" r="5" fill="#38bdf8"/><text x="84" y="162" font-family="DM Mono,monospace" font-size="9" fill="#38bdf8" text-anchor="middle">p</text>
+        <circle cx="278" cy="148" r="5" fill="#a78bfa"/><text x="278" y="162" font-family="DM Mono,monospace" font-size="9" fill="#a78bfa" text-anchor="middle">q</text>
+        <text x="202" y="40" font-family="DM Mono,monospace" font-size="8" fill="#fb923c">X = R&#8321; &#8745; R&#8322;</text>
+      </svg>
+      <div class="figcap">Two rays from O&#8321; and O&#8322; intersect at unique 3D point X</div>
+    </div>
+    <div class="prose">
+      <ul class="steps">
+        <li><span class="sn sb">1</span><div class="sd">Camera&nbsp;1 observes p &#8594; ray R&#8321; from O&#8321; through p</div></li>
+        <li><span class="sn sb">2</span><div class="sd">Camera&nbsp;2 observes q &#8594; ray R&#8322; from O&#8322; through q</div></li>
+        <li><span class="sn sg">3</span><div class="sd"><strong>X = R&#8321; &#8745; R&#8322;</strong> &mdash; the unique 3D location</div></li>
+      </ul>
+      <div class="ok"><strong>This requires knowing R and t</strong> between the two cameras. That relationship is encoded in the <strong>Essential Matrix E</strong>.</div>
+    </div>
+  </div>
+</div>
+</div><!-- /bg-intro -->
+
+<!-- BG: p-q RELATIONSHIP -->
+<div class="panel" id="bg-pq">
+<div class="sh">p&ndash;q Relationship &mdash; <em>Derivation (Lecture slides p.5&ndash;13)</em></div>
+<div class="card ca">
+  <div class="card-t">Step 1 &mdash; Express x&#185; in Camera&nbsp;1 using unknown depth &lambda;</div>
+  <div class="duo">
+    <div>
+      <p class="prose" style="margin-bottom:10px">If Camera&nbsp;1 observes pixel p&nbsp;=&nbsp;(p&#8321;,&nbsp;p&#8322;), the 3D point lies somewhere along a ray. We express it with unknown scale &lambda; (the depth):</p>
+      <div class="mth">
+        <span class="z">// p&#771; = homogeneous form [p&#8321;, p&#8322;, 1]&sup1;</span><br>
+        <span class="z">// &lambda; = unknown depth (scale factor)</span><br><br>
+        x&#185; = <span class="b">&lambda; &middot; p&#771;</span> = &lambda;[p&#8321;, p&#8322;, 1]&sup1;
+      </div>
+      <div class="why"><strong>Why &lambda;?</strong> We know the <em>direction</em> from p, but not how far along that direction X lies. Any value of &lambda; gives the same image pixel. Depth is the unknown we want to recover.</div>
+      <div class="why" style="margin-top:6px"><strong>Why homogeneous?</strong> Appending a 1 converts the 2D point into 3D, allowing rotation and translation to be applied as a single matrix multiply.</div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 340 218" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="16" width="130" height="170" rx="5" fill="#0c1219" stroke="#38bdf8" stroke-width="1.2"/>
+        <text x="80" y="8" font-family="DM Mono,monospace" font-size="8.5" fill="#38bdf8" text-anchor="middle">Camera 1 image plane</text>
+        <line x1="80" y1="100" x2="140" y2="100" stroke="#1b2d44" stroke-width="1.5"/>
+        <line x1="80" y1="100" x2="80" y2="24" stroke="#1b2d44" stroke-width="1.5"/>
+        <circle cx="108" cy="66" r="5" fill="#38bdf8"/><text x="118" y="64" font-family="DM Mono,monospace" font-size="9" fill="#38bdf8">p</text>
+        <circle cx="80" cy="190" r="6" fill="#38bdf8"/><text x="80" y="208" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">O&#8321;</text>
+        <line x1="108" y1="66" x2="262" y2="14" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <circle cx="166" cy="48" r="7" fill="#fb923c" fill-opacity=".75"/><text x="176" y="46" font-family="DM Mono,monospace" font-size="7.5" fill="#fb923c">&lambda;&#8321;&middot;p&#771;</text>
+        <circle cx="228" cy="24" r="7" fill="#a78bfa" fill-opacity=".75"/><text x="238" y="22" font-family="DM Mono,monospace" font-size="7.5" fill="#a78bfa">&lambda;&#8322;&middot;p&#771;</text>
+        <rect x="158" y="148" width="172" height="36" rx="4" fill="#1b2d44" stroke="#38bdf8" stroke-width="1"/>
+        <text x="244" y="164" font-family="DM Mono,monospace" font-size="8.5" fill="#38bdf8" text-anchor="middle">x&#185; = &lambda;[p&#8321;, p&#8322;, 1]&sup1;</text>
+        <text x="244" y="177" font-family="DM Mono,monospace" font-size="7" fill="#3f5a72" text-anchor="middle">same direction, unknown depth</text>
+      </svg>
+      <div class="figcap">All points with different &lambda; on the same ray give the same pixel p</div>
+    </div>
+  </div>
+</div>
+<div class="card co">
+  <div class="card-t">Step 2 &mdash; Transform to Camera&nbsp;2 &#8594; &mu;q = &lambda;Rp&#771; + t</div>
+  <div class="duo">
+    <div>
+      <p class="prose" style="margin-bottom:10px">The rigid-body transform from Camera&nbsp;1 to Camera&nbsp;2 (rotation R, translation t) gives the point in Camera&nbsp;2's frame. Substituting x&#185; = &lambda;p&#771;:</p>
+      <div class="mth">
+        x&#178; = <span class="b">R</span>x&#185; + <span class="o">t</span><br>
+        x&#178; = &lambda;<span class="b">Rp&#771;</span> + <span class="o">t</span><br><br>
+        <span class="z">// Project to image (unknown scale &mu; appears):</span><br>
+        <span class="g">&mu;q = &lambda;Rp&#771; + t</span>
+      </div>
+      <div class="note"><strong>What this says (slide p.10):</strong> q is a linear combination of <span style="color:var(--c1)">Rp&#771;</span> and <span style="color:var(--c3)">t</span>. Both &lambda; and &mu; are unknown, but this structure encodes that q must lie on a specific line.</div>
+      <div class="why" style="margin-top:8px"><strong>What is Rp&#771;?</strong> It is the direction of p, rotated into Camera&nbsp;2&rsquo;s coordinate frame. It represents where Camera&nbsp;2 &ldquo;sees&rdquo; the same ray direction.</div>
+      <div class="why" style="margin-top:6px"><strong>What is t?</strong> t is the position of O&#8321; expressed in Camera&nbsp;2&rsquo;s frame. This is exactly the epipole e&#8322; in Camera&nbsp;2&rsquo;s image.</div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 360 258" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="at" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#fb923c" stroke-width="1.5"/></marker>
+          <marker id="ag" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#34d399" stroke-width="1.5"/></marker>
+        </defs>
+        <circle cx="55" cy="218" r="7" fill="#38bdf8"/><text x="55" y="236" font-family="DM Mono,monospace" font-size="8.5" fill="#38bdf8" text-anchor="middle">O&#8321;</text>
+        <circle cx="305" cy="218" r="7" fill="#a78bfa"/><text x="305" y="236" font-family="DM Mono,monospace" font-size="8.5" fill="#a78bfa" text-anchor="middle">O&#8322;</text>
+        <circle cx="180" cy="48" r="10" fill="#fb923c"/><text x="180" y="52" font-family="DM Mono,monospace" font-size="9" fill="#fff" text-anchor="middle">X</text>
+        <line x1="62" y1="218" x2="298" y2="218" stroke="#fb923c" stroke-width="2.5" marker-end="url(#at)"/>
+        <text x="180" y="212" font-family="DM Mono,monospace" font-size="8.5" fill="#fb923c" text-anchor="middle">t &ensp;(&equiv; e&#8322;, epipole in Cam&nbsp;2)</text>
+        <line x1="305" y1="210" x2="222" y2="90" stroke="#34d399" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#ag)"/>
+        <text x="292" y="148" font-family="DM Mono,monospace" font-size="9" fill="#34d399" transform="rotate(58,292,148)">Rp&#771;</text>
+        <line x1="55" y1="210" x2="172" y2="56" stroke="#38bdf866" stroke-width="1.5"/>
+        <text x="86" y="148" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" transform="rotate(-52,86,148)">&lambda;p&#771;</text>
+        <line x1="250" y1="172" x2="358" y2="172" stroke="#a78bfa" stroke-width="1.5"/>
+        <circle cx="296" cy="172" r="5" fill="#a78bfa"/><text x="296" y="160" font-family="DM Mono,monospace" font-size="9" fill="#a78bfa" text-anchor="middle">q</text>
+        <rect x="12" y="90" width="175" height="38" rx="4" fill="#1b2d44" stroke="#34d399" stroke-width="1"/>
+        <text x="99" y="107" font-family="DM Mono,monospace" font-size="8.5" fill="#34d399" text-anchor="middle">&mu;q = &lambda;Rp&#771; + t</text>
+        <text x="99" y="120" font-family="DM Mono,monospace" font-size="7" fill="#3f5a72" text-anchor="middle">q lies on the line through Rp&#771; and t</text>
+      </svg>
+      <div class="figcap">q is a linear combo of Rp&#771; (direction rotated to Cam2) and t (baseline)</div>
+    </div>
+  </div>
+</div>
+<div class="card cp">
+  <div class="card-t">Step 3 &mdash; The epipolar line &ell; = t &times; Rp&#771;</div>
+  <div class="duo w46">
+    <div class="fig">
+      <svg viewBox="0 0 360 252" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="55,220 315,220 256,48 118,48" fill="rgba(56,189,248,0.04)" stroke="#38bdf8" stroke-width="1" stroke-dasharray="5,4"/>
+        <text x="188" y="36" font-family="DM Mono,monospace" font-size="8.5" fill="#38bdf8" text-anchor="middle">epipolar plane</text>
+        <circle cx="55" cy="220" r="7" fill="#38bdf8"/><text x="55" y="238" font-family="DM Mono,monospace" font-size="8.5" fill="#38bdf8" text-anchor="middle">O&#8321;</text>
+        <circle cx="315" cy="220" r="7" fill="#a78bfa"/><text x="315" y="238" font-family="DM Mono,monospace" font-size="8.5" fill="#a78bfa" text-anchor="middle">O&#8322;</text>
+        <circle cx="188" cy="60" r="10" fill="#fb923c"/><text x="188" y="64" font-family="DM Mono,monospace" font-size="9" fill="#fff" text-anchor="middle">X</text>
+        <defs><marker id="at2" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#fb923c" stroke-width="1.5"/></marker><marker id="ag2" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#34d399" stroke-width="1.5"/></marker></defs>
+        <line x1="62" y1="220" x2="308" y2="220" stroke="#fb923c" stroke-width="2.5" marker-end="url(#at2)"/>
+        <text x="188" y="214" font-family="DM Mono,monospace" font-size="8" fill="#fb923c" text-anchor="middle">t = position of O&#8321; in Cam&nbsp;2 frame = e&#8322;</text>
+        <line x1="315" y1="212" x2="253" y2="100" stroke="#34d399" stroke-width="2.5" marker-end="url(#ag2)"/>
+        <text x="306" y="154" font-family="DM Mono,monospace" font-size="8.5" fill="#34d399" transform="rotate(62,306,154)">Rp&#771;</text>
+        <line x1="315" y1="220" x2="234" y2="84" stroke="#a78bfa" stroke-width="2.5"/>
+        <text x="268" y="145" font-family="DM Mono,monospace" font-size="8" fill="#a78bfa" transform="rotate(62,268,145)">epipolar line &ell;</text>
+        <rect x="258" y="148" width="80" height="36" rx="3" fill="rgba(167,139,250,.06)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="298" y="142" font-family="DM Mono,monospace" font-size="7.5" fill="#a78bfa" text-anchor="middle">Cam 2</text>
+        <circle cx="288" cy="168" r="4" fill="#a78bfa"/><text x="296" y="166" font-family="DM Mono,monospace" font-size="8" fill="#a78bfa">q</text>
+        <line x1="55" y1="212" x2="180" y2="68" stroke="#38bdf866" stroke-width="1.5"/>
+      </svg>
+      <div class="figcap">t&nbsp;=&nbsp;e&#8322; (epipole in Cam&nbsp;2). Rp&#771; = point on epipolar line. &ell;&nbsp;=&nbsp;t&times;Rp&#771;</div>
+    </div>
+    <div class="prose">
+      <ul class="steps">
+        <li><span class="sn so">t</span><div class="sd"><strong>t is the position of O&#8321; in Camera&nbsp;2&rsquo;s frame</strong><br>Projectively equivalent to e&#8322; &mdash; the epipole in Camera&nbsp;2 (where Cam&nbsp;1 appears from Cam&nbsp;2).</div></li>
+        <li><span class="sn sg">Rp&#771;</span><div class="sd"><strong>Rp&#771; is the direction of p rotated into Cam&nbsp;2&rsquo;s frame</strong><br>Equivalent to a point on the epipolar line.</div></li>
+        <li><span class="sn sp">&ell;</span><div class="sd"><strong>Epipolar line = line through two points = their cross product</strong><br><span style="font-family:'DM Mono',monospace;color:var(--c3)">&ell; = t &times; Rp&#771;</span><br>q must satisfy q&#771; &middot; &ell; = 0.</div></li>
+      </ul>
+    </div>
+  </div>
+</div>
+</div><!-- /bg-pq -->
+
+<!-- BG: ESSENTIAL MATRIX -->
+<div class="panel" id="bg-emat">
+<div class="sh">Essential Matrix E = [t]&#x2093;R &mdash; <em>From Geometry to One Equation</em></div>
+<div class="card ca">
+  <div class="card-t">Cross product as a matrix (slide p.15)</div>
+  <div class="duo">
+    <div>
+      <p class="prose" style="margin-bottom:10px">Epipolar line &ell;&nbsp;=&nbsp;t&times;Rp&#771;. To factor out p&#771; cleanly, we replace the cross product with a matrix multiplication using the <strong>skew-symmetric matrix [t]&#x2093;</strong>:</p>
+      <div class="mth">
+        <span class="z">// Expand t &times; x component by component:</span><br>
+        row&nbsp;1: &minus;t&#8323;x&#8322; + t&#8322;x&#8323;<br>
+        row&nbsp;2: &ensp;t&#8323;x&#8321; &minus; t&#8321;x&#8323;<br>
+        row&nbsp;3: &minus;t&#8322;x&#8321; + t&#8321;x&#8322;<br><br>
+        <span class="z">// Exactly equals this matrix &times; x:</span><br>
+        t &times; x = <span class="b">[[0,&minus;t&#8323;,t&#8322;],[t&#8323;,0,&minus;t&#8321;],[&minus;t&#8322;,t&#8321;,0]]</span> &middot; x<br>
+        &emsp;&emsp;&emsp;&emsp;&emsp;= <span class="b">[t]&#x2093;</span> &middot; x
+      </div>
+      <div class="why"><strong>Why is this possible?</strong> Each component of t&times;x is linear in x (no x&sup2; or x&middot;y terms). Every linear map on a vector can be written as a matrix. The entries of [t]&#x2093; are just the components of t rearranged with signs.</div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 330 275" xmlns="http://www.w3.org/2000/svg">
+        <text x="165" y="18" font-family="DM Mono,monospace" font-size="9" fill="#3f5a72" text-anchor="middle">&ell; = t &times; Rp&#771; &rarr; rewrite as matrix form</text>
+        <circle cx="100" cy="78" r="28" fill="#162034" stroke="#fb923c" stroke-width="1.5"/>
+        <text x="100" y="75" font-family="DM Mono,monospace" font-size="9" fill="#fb923c" text-anchor="middle">t</text>
+        <text x="100" y="89" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">[t&#8321;,t&#8322;,t&#8323;]</text>
+        <text x="155" y="82" font-family="DM Mono,monospace" font-size="16" fill="#3f5a72">&times;</text>
+        <circle cx="212" cy="78" r="28" fill="#162034" stroke="#34d399" stroke-width="1.5"/>
+        <text x="212" y="75" font-family="DM Mono,monospace" font-size="9" fill="#34d399" text-anchor="middle">Rp&#771;</text>
+        <line x1="165" y1="112" x2="165" y2="134" stroke="#38bdf8" stroke-width="2"/>
+        <polygon points="165,134 160,124 170,124" fill="#38bdf8"/>
+        <text x="196" y="126" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8">matrix form</text>
+        <rect x="16" y="142" width="298" height="88" rx="5" fill="#0c1219" stroke="#38bdf8" stroke-width="1"/>
+        <text x="25" y="162" font-family="DM Mono,monospace" font-size="7.5" fill="#fb923c">[[0, &minus;t&#8323;, t&#8322;],</text>
+        <text x="25" y="178" font-family="DM Mono,monospace" font-size="7.5" fill="#fb923c"> [t&#8323;, 0, &minus;t&#8321;],</text>
+        <text x="25" y="194" font-family="DM Mono,monospace" font-size="7.5" fill="#fb923c"> [&minus;t&#8322;, t&#8321;, 0]]</text>
+        <text x="142" y="172" font-family="DM Mono,monospace" font-size="14" fill="#3f5a72">&middot;</text>
+        <text x="154" y="174" font-family="DM Mono,monospace" font-size="9" fill="#34d399">Rp&#771;</text>
+        <text x="25" y="218" font-family="DM Mono,monospace" font-size="8.5" fill="#3f5a72">= [t]&#x2093; &middot; Rp&#771;</text>
+        <text x="158" y="218" font-family="DM Mono,monospace" font-size="8.5" fill="#38bdf8">= ([t]&#x2093; R) &middot; p&#771;</text>
+        <rect x="100" y="240" width="120" height="22" rx="4" fill="rgba(251,191,36,.1)" stroke="#fbbf24" stroke-width="1"/>
+        <text x="160" y="255" font-family="DM Mono,monospace" font-size="9" fill="#fbbf24" text-anchor="middle">E = [t]&#x2093; &middot; R</text>
+        <text x="165" y="273" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">Factor [t]&#x2093; and R together &rarr; E appears naturally</text>
+      </svg>
+      <div class="figcap">t&times;Rp&#771; = [t]&#x2093;(Rp&#771;) = ([t]&#x2093;R)p&#771; &rarr; define E = [t]&#x2093;R</div>
+    </div>
+  </div>
+</div>
+<div class="card co">
+  <div class="card-t">Full derivation chain &rarr; epipolar constraint q&#771;&sup1;Ep&#771; = 0</div>
+  <div class="chain">
+    <div class="cstep"><div class="clbl">&#9312; Epipolar line (slide p.13)</div><div class="ceq">&ell; = t &times; Rp&#771;&emsp;(line through e&#8322;=t and Rp&#771;)</div></div>
+    <div class="cstep"><div class="clbl">&#9313; Replace &times; with matrix (slide p.15)</div><div class="ceq">&ell; = [t]&#x2093; &middot; Rp&#771;&emsp;(skew-symmetric matrix form)</div></div>
+    <div class="cstep"><div class="clbl">&#9314; Factor &rarr; define E (slide p.16)</div><div class="ceq">&ell; = ([t]&#x2093;R) &middot; p&#771; = <strong style="color:var(--c3)">E &middot; p&#771;</strong>&emsp;where E = [t]&#x2093;R</div></div>
+    <div class="cstep"><div class="clbl">&#9315; q lies on &ell; (slide p.17)</div><div class="ceq">q&#771; &middot; &ell; = 0 &rarr; q&#771;&sup1;(Ep&#771;) = 0 &rarr; <strong style="color:var(--c4)">q&#771;&sup1;Ep&#771; = 0</strong></div><div style="font-size:.82rem;color:var(--mt);margin-top:4px">A point q&#771; lies on line &ell; iff their dot product = 0 in homogeneous coordinates.</div></div>
+  </div>
+  <div class="fbox">E = [t]&#x2093; &middot; R &emsp;&emsp;&emsp; q&#771;&sup1; E p&#771; = 0</div>
+  <div class="duo" style="margin-top:14px">
+    <div>
+      <div class="note"><strong>Why does Ep&#771; give a LINE, not a point?</strong> p corresponds to infinitely many 3D depths &lambda;. Each &lambda; maps to a different location in Camera&nbsp;2 &mdash; but all those locations lie on the <em>same epipolar line</em>. So E&middot;p&#771;&nbsp;=&nbsp;&ell; is a 3-vector of line coefficients, not a pixel.</div>
+      <div class="warn" style="margin-top:8px"><strong>E vs F:</strong> E works with normalised coords (focal length = 1). For pixel coords, use the Fundamental Matrix: F = K&#8322;&sup1;&supT; E K&#8321;&sup1; which folds in camera calibration matrices K&#8321;, K&#8322;.</div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="18" width="120" height="108" rx="5" fill="#0c1219" stroke="#38bdf8" stroke-width="1.2"/>
+        <text x="70" y="10" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">Camera 1</text>
+        <circle cx="52" cy="70" r="6" fill="#38bdf8"/><text x="62" y="68" font-family="DM Mono,monospace" font-size="9" fill="#38bdf8">p&#771;</text>
+        <defs><marker id="ay" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#fbbf24" stroke-width="1.5"/></marker></defs>
+        <path d="M132 70 Q152 58 158 70" fill="none" stroke="#fbbf24" stroke-width="2" marker-end="url(#ay)"/>
+        <text x="146" y="54" font-family="DM Mono,monospace" font-size="8" fill="#fbbf24">E&middot;p&#771;</text>
+        <rect x="168" y="18" width="120" height="108" rx="5" fill="#0c1219" stroke="#a78bfa" stroke-width="1.2"/>
+        <text x="228" y="10" font-family="DM Mono,monospace" font-size="8" fill="#a78bfa" text-anchor="middle">Camera 2</text>
+        <line x1="174" y1="46" x2="284" y2="112" stroke="#a78bfa" stroke-width="2.5"/>
+        <text x="176" y="42" font-family="DM Mono,monospace" font-size="7.5" fill="#a78bfa">&ell; = E&middot;p&#771; (a LINE)</text>
+        <circle cx="246" cy="86" r="5" fill="#a78bfa"/><text x="254" y="84" font-family="DM Mono,monospace" font-size="9" fill="#a78bfa">q</text>
+        <text x="150" y="150" font-family="DM Mono,monospace" font-size="8" fill="#34d399" text-anchor="middle">q&#771;&sup1; &middot; &ell; = 0</text>
+        <text x="150" y="163" font-family="DM Mono,monospace" font-size="8" fill="#34d399" text-anchor="middle">&rarr; q&#771;&sup1; E p&#771; = 0</text>
+        <text x="150" y="182" font-family="DM Mono,monospace" font-size="7" fill="#3f5a72" text-anchor="middle">E&middot;p&#771; = LINE because depth &lambda; is unknown</text>
+      </svg>
+      <div class="figcap">E&middot;p&#771; &rarr; line &ell; in Cam&nbsp;2. q lies on &ell; &iff; q&#771;&sup1;Ep&#771;&nbsp;=&nbsp;0</div>
+    </div>
+  </div>
+</div>
+<div class="card cp">
+  <div class="card-t">Why E&middot;&#7869;&#8321; = 0? &mdash; The epipole and E&rsquo;s null space (slide p.19)</div>
+  <div class="duo w46">
+    <div class="fig">
+      <svg viewBox="0 0 340 240" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="18" width="140" height="196" rx="5" fill="#0c1219" stroke="#38bdf8" stroke-width="1.2"/>
+        <text x="85" y="10" font-family="DM Mono,monospace" font-size="8.5" fill="#38bdf8" text-anchor="middle">Camera 1</text>
+        <circle cx="124" cy="118" r="9" fill="#fbbf24"/><text x="140" y="121" font-family="DM Mono,monospace" font-size="9" fill="#fbbf24">e&#8321;</text>
+        <line x1="124" y1="118" x2="20" y2="40" stroke="#38bdf866" stroke-width="2"/>
+        <line x1="124" y1="118" x2="20" y2="80" stroke="#38bdf8" stroke-width="2"/>
+        <line x1="124" y1="118" x2="20" y2="118" stroke="#fb923c" stroke-width="2"/>
+        <line x1="124" y1="118" x2="20" y2="160" stroke="#34d399" stroke-width="2"/>
+        <line x1="124" y1="118" x2="20" y2="200" stroke="#38bdf866" stroke-width="2"/>
+        <circle cx="52" cy="80" r="4" fill="#38bdf8"/>
+        <circle cx="50" cy="118" r="4" fill="#fb923c"/>
+        <circle cx="52" cy="158" r="4" fill="#34d399"/>
+        <circle cx="320" cy="118" r="8" fill="#a78bfa"/><text x="320" y="138" font-family="DM Mono,monospace" font-size="8.5" fill="#a78bfa" text-anchor="middle">O&#8322;</text>
+        <line x1="312" y1="118" x2="135" y2="118" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <text x="228" y="111" font-family="DM Mono,monospace" font-size="7.5" fill="#a78bfa" text-anchor="middle">baseline &rarr; e&#8321;</text>
+        <rect x="158" y="180" width="110" height="34" rx="4" fill="#1b2d44" stroke="#fbbf24" stroke-width="1"/>
+        <text x="213" y="194" font-family="DM Mono,monospace" font-size="9" fill="#fbbf24" text-anchor="middle">E &middot; &#7869;&#8321; = 0</text>
+        <text x="213" y="207" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">null space of E</text>
+      </svg>
+      <div class="figcap">All epipolar lines converge at e&#8321;. E&middot;&#7869;&#8321;&nbsp;=&nbsp;0 because R&#7869;&#8321;&nbsp;&parallel;&nbsp;t</div>
+    </div>
+    <div class="prose">
+      <div class="chain">
+        <div class="cstep"><div class="clbl">when p = e&#8321;</div><div class="ceq">Ray through e&#8321; points exactly along the baseline (t direction)</div></div>
+        <div class="cstep"><div class="clbl">therefore</div><div class="ceq">R&#7869;&#8321; is parallel to t &rarr; R&#7869;&#8321; = &alpha;t</div></div>
+        <div class="cstep"><div class="clbl">cross product of parallel vectors</div><div class="ceq">t &times; &alpha;t = 0</div></div>
+        <div class="cstep"><div class="clbl">result</div><div class="ceq">E&#7869;&#8321; = [t]&#x2093;R&#7869;&#8321; = t &times; R&#7869;&#8321; = 0</div></div>
+      </div>
+      <div class="ok" style="margin-top:8px"><strong>Practical implication:</strong> SVD(E) &rarr; the right singular vector for the smallest singular value = e&#8321;. This also shows rank(E)&nbsp;=&nbsp;2 (one singular value is zero).</div>
+    </div>
+  </div>
+</div>
+</div><!-- /bg-emat -->
+
+<!-- BG: 8-POINT ALGORITHM -->
+<div class="panel" id="bg-eight">
+<div class="sh">8-Point Algorithm &mdash; <em>Computing F from Point Correspondences</em></div>
+<div class="card ca">
+  <div class="card-t">Degrees of Freedom: why exactly 8 points?</div>
+  <div class="duo">
+    <div>
+      <ul class="steps">
+        <li><span class="sn sb">1</span><div class="sd"><strong>F is 3&times;3 &rarr; 9 entries</strong></div></li>
+        <li><span class="sn sb">2</span><div class="sd"><strong>Scale invariance: &minus;1 DOF</strong><br>F and kF encode identical epipolar geometry. Fix &Vert;F&Vert;&nbsp;=&nbsp;1 &rarr; 8 free parameters.</div></li>
+        <li><span class="sn sb">3</span><div class="sd"><strong>Rank-2 constraint: &minus;1 more DOF (nonlinear)</strong><br>det(F)&nbsp;=&nbsp;0 because the epipole is in F&rsquo;s null space. This is nonlinear &mdash; handled <em>after</em> solving by zeroing &sigma;&#8323; in SVD(F).</div></li>
+        <li><span class="sn sg">&rarr;</span><div class="sd"><strong>8 linear DOF &rarr; need 8 equations &rarr; 8 point pairs</strong><br>Each pair gives exactly 1 scalar equation: q&#771;&sup1;Fp&#771;&nbsp;=&nbsp;0.</div></li>
+      </ul>
+      <div class="why"><strong>Why 1 equation per point?</strong> q&#771;&sup1;Fp&#771;&nbsp;=&nbsp;0 is a scalar&nbsp;&mdash; one number. Compare homography: q&nbsp;=&nbsp;Hp gives 2 equations (x and y). Weaker constraint &rarr; need more points.</div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 320 272" xmlns="http://www.w3.org/2000/svg">
+        <text x="160" y="18" font-family="DM Mono,monospace" font-size="8.5" fill="#3f5a72" text-anchor="middle">F &mdash; Degrees of Freedom</text>
+        <rect x="10" y="26" width="200" height="66" rx="4" fill="#0c1219" stroke="#38bdf8" stroke-width="1"/>
+        <text x="46" y="46" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">F&#8321;&#8321;</text><text x="110" y="46" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">F&#8321;&#8322;</text><text x="174" y="46" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">F&#8321;&#8323;</text>
+        <text x="46" y="64" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">F&#8322;&#8321;</text><text x="110" y="64" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">F&#8322;&#8322;</text><text x="174" y="64" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">F&#8322;&#8323;</text>
+        <text x="46" y="82" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">F&#8323;&#8321;</text><text x="110" y="82" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">F&#8323;&#8322;</text><text x="174" y="82" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">F&#8323;&#8323;</text>
+        <line x1="76" y1="26" x2="76" y2="92" stroke="#38bdf822" stroke-width="1"/><line x1="140" y1="26" x2="140" y2="92" stroke="#38bdf822" stroke-width="1"/>
+        <line x1="10" y1="55" x2="210" y2="55" stroke="#38bdf822" stroke-width="1"/><line x1="10" y1="74" x2="210" y2="74" stroke="#38bdf822" stroke-width="1"/>
+        <text x="110" y="108" font-family="DM Mono,monospace" font-size="8.5" fill="#38bdf8" text-anchor="middle">9 entries</text>
+        <text x="110" y="132" font-family="DM Mono,monospace" font-size="11" fill="#fb923c" text-anchor="middle">&minus; 1 &ensp;(scale invariance)</text>
+        <text x="110" y="147" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">kF &equiv; F for all epipolar geometry</text>
+        <rect x="36" y="157" width="148" height="26" rx="4" fill="rgba(251,146,60,.1)" stroke="#fb923c" stroke-width="1"/>
+        <text x="110" y="174" font-family="DM Mono,monospace" font-size="8.5" fill="#fb923c" text-anchor="middle">8 linear DOF &rarr; 8 equations</text>
+        <text x="110" y="198" font-family="DM Mono,monospace" font-size="10" fill="#a78bfa" text-anchor="middle">&minus; 1 &ensp;(rank-2, nonlinear)</text>
+        <text x="110" y="213" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">det(F)=0 &rarr; enforce after solve via SVD</text>
+        <rect x="48" y="222" width="124" height="26" rx="4" fill="rgba(167,139,250,.1)" stroke="#a78bfa" stroke-width="1"/>
+        <text x="110" y="239" font-family="DM Mono,monospace" font-size="8.5" fill="#a78bfa" text-anchor="middle">7 true DOF of F</text>
+        <rect x="10" y="257" width="300" height="13" rx="3" fill="rgba(52,211,153,.05)" stroke="#34d399" stroke-width="1"/>
+        <text x="160" y="267" font-family="DM Mono,monospace" font-size="7.5" fill="#34d399" text-anchor="middle">8-point: 8 pairs &times; 1 eq = 8 rows &rarr; Af=0 &rarr; SVD</text>
+      </svg>
+      <div class="figcap">9 &minus; 1(scale) = 8 linear DOF &rarr; 8 points needed. Rank-2 enforced afterwards.</div>
+    </div>
+  </div>
+</div>
+<div class="card cg">
+  <div class="card-t">Expanding q&#771;&sup1;Fp&#771; = 0 into one linear row</div>
+  <div class="mth">
+    <span class="z">// Full expansion of q&#771;&sup1; F p&#771; = 0 (one correspondence &rarr; one equation):</span><br>
+    <span class="b">q&#8321;p&#8321;&middot;F&#8321;&#8321; + q&#8321;p&#8322;&middot;F&#8321;&#8322; + q&#8321;&middot;F&#8321;&#8323;</span> +<br>
+    <span class="o">q&#8322;p&#8321;&middot;F&#8322;&#8321; + q&#8322;p&#8322;&middot;F&#8322;&#8322; + q&#8322;&middot;F&#8322;&#8323;</span> +<br>
+    <span class="g">p&#8321;&middot;F&#8323;&#8321; + p&#8322;&middot;F&#8323;&#8322; + F&#8323;&#8323;</span> = 0<br><br>
+    <span class="z">// Reshape as dot product with unknown vector f = [F&#8321;&#8321;&hellip;F&#8323;&#8323;]&sup1;:</span><br>
+    [<span class="b">q&#8321;p&#8321;, q&#8321;p&#8322;, q&#8321;</span>, <span class="o">q&#8322;p&#8321;, q&#8322;p&#8322;, q&#8322;</span>, <span class="g">p&#8321;, p&#8322;, 1</span>] &middot; f = 0
+  </div>
+  <p class="prose" style="margin-top:10px">Stack 8 such rows (from 8 point pairs) into matrix A&nbsp;(8&times;9). Solve <strong>Af&nbsp;=&nbsp;0</strong> by SVD: last column of V. Reshape into 3&times;3, then enforce rank-2 by zeroing &sigma;&#8323; in a second SVD.</p>
+  <div class="note"><strong>Same structure as Week 4!</strong> The homography also solved Ah&nbsp;=&nbsp;0 by SVD. Difference: H uses 4 points&times;2 equations&nbsp;=&nbsp;8 rows. F uses 8 points&times;1 equation&nbsp;=&nbsp;8 rows. Identical algebra, different constraint per point.</div>
+</div>
+</div><!-- /bg-eight -->
+
+<!-- BG: STEREO -->
+<div class="panel" id="bg-stereo">
+<div class="sh">Stereo Reconstruction &mdash; <em>Parallel Cameras &amp; Disparity</em></div>
+<div class="card ca">
+  <div class="card-t">E for parallel cameras &rarr; epipolar lines are horizontal rows (L13 slides p.5&ndash;8)</div>
+  <div class="duo">
+    <div>
+      <p class="prose" style="margin-bottom:10px">For a pure x-translation stereo pair (R&nbsp;=&nbsp;I, t&nbsp;=&nbsp;[a,&nbsp;0,&nbsp;0]&sup1;):</p>
+      <div class="mth">
+        E = [t]&#x2093;R = [t]&#x2093; = <span class="b">[[0,0,0],[0,0,&minus;a],[0,a,0]]</span><br><br>
+        <span class="z">// For point p = [u&#8321;, v&#8321;, 1]&sup1;:</span><br>
+        &ell; = Ep&#771; = <span class="g">[0, &minus;1, v&#8321;]&sup1;</span><br><br>
+        <span class="z">// Line equation: 0x &minus; y + v&#8321; = 0 &rarr;</span> <strong>y = v&#8321;</strong>
+      </div>
+      <div class="ok"><strong>Key result:</strong> q must lie on the same horizontal row as p. 2D search &rarr; 1D search &mdash; a massive computational win for stereo matching.</div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 350 205" xmlns="http://www.w3.org/2000/svg">
+        <rect x="14" y="32" width="120" height="76" rx="4" fill="#0c1219" stroke="#38bdf8" stroke-width="1.5"/>
+        <text x="74" y="24" font-family="DM Mono,monospace" font-size="8.5" fill="#38bdf8" text-anchor="middle">Camera 1</text>
+        <rect x="216" y="32" width="120" height="76" rx="4" fill="#0c1219" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="276" y="24" font-family="DM Mono,monospace" font-size="8.5" fill="#a78bfa" text-anchor="middle">Camera 2</text>
+        <line x1="14" y1="70" x2="336" y2="70" stroke="#34d399" stroke-width="2" stroke-dasharray="6,4"/>
+        <text x="175" y="63" font-family="DM Mono,monospace" font-size="8.5" fill="#34d399" text-anchor="middle">y = v&#8321; &ensp;(same row!)</text>
+        <circle cx="62" cy="70" r="5" fill="#38bdf8"/><text x="62" y="58" font-family="DM Mono,monospace" font-size="9" fill="#38bdf8" text-anchor="middle">p</text>
+        <circle cx="254" cy="70" r="5" fill="#a78bfa"/><text x="254" y="58" font-family="DM Mono,monospace" font-size="9" fill="#a78bfa" text-anchor="middle">q</text>
+        <circle cx="158" cy="8" r="8" fill="#fb923c"/><text x="158" y="12" font-family="DM Mono,monospace" font-size="8" fill="#fff" text-anchor="middle">X</text>
+        <line x1="62" y1="70" x2="152" y2="14" stroke="#38bdf866" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <line x1="254" y1="70" x2="164" y2="14" stroke="#a78bfa66" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <circle cx="74" cy="143" r="6" fill="#38bdf8"/><text x="74" y="160" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">O&#8321;</text>
+        <circle cx="276" cy="143" r="6" fill="#a78bfa"/><text x="276" y="160" font-family="DM Mono,monospace" font-size="8" fill="#a78bfa" text-anchor="middle">O&#8322;</text>
+        <line x1="80" y1="143" x2="270" y2="143" stroke="#fb923c" stroke-width="2"/>
+        <text x="175" y="136" font-family="DM Mono,monospace" font-size="8" fill="#fb923c" text-anchor="middle">a (baseline)</text>
+        <text x="175" y="182" font-family="DM Mono,monospace" font-size="8" fill="#3f5a72" text-anchor="middle">Parallel cameras &rarr; epipolar lines are horizontal</text>
+        <text x="175" y="195" font-family="DM Mono,monospace" font-size="8" fill="#3f5a72" text-anchor="middle">Search for q restricted to the same row as p</text>
+      </svg>
+      <div class="figcap">R=I, t=[a,0,0] &rarr; &ell;=[0,&minus;1,v&#8321;]&sup1; &rarr; y=v&#8321; for every epipolar line</div>
+    </div>
+  </div>
+</div>
+<div class="card co">
+  <div class="card-t">Deriving d = b&middot;f / Z via similar triangles (L13 slides p.13&ndash;16)</div>
+  <div class="duo w64">
+    <div>
+      <ul class="steps">
+        <li><span class="sn sb">1</span><div class="sd"><strong>Camera&nbsp;1 projection</strong> (similar triangles, normalised f=1):<br><span style="font-family:'DM Mono',monospace;color:var(--c1)">u&#8321;/1 = a&#8321;/z &rarr; u&#8321; = a&#8321;/z</span></div></li>
+        <li><span class="sn sp">2</span><div class="sd"><strong>Camera&nbsp;2 projection</strong> (u&#8322; is negative &mdash; left of principal point):<br><span style="font-family:'DM Mono',monospace;color:var(--c2)">u&#8322;/1 = a&#8322;/z &rarr; u&#8322; = a&#8322;/z</span></div></li>
+        <li><span class="sn so">3</span><div class="sd"><strong>Subtract &rarr; X_w cancels:</strong><br><span style="font-family:'DM Mono',monospace;color:var(--c3)">d = u&#8321; &minus; u&#8322; = (a&#8321;+a&#8322;)/z = a/z</span><br><span style="font-size:.82rem;color:var(--mt)">Both u&#8321; and u&#8322; contain the world-x position, which cancels on subtraction.</span></div></li>
+        <li><span class="sn sg">4</span><div class="sd"><strong>With focal length f pixels:</strong><br><span style="font-family:'DM Mono',monospace;color:var(--c4)">d = a&middot;f / z</span></div></li>
+      </ul>
+      <div class="fbox">disparity &ensp;d = b &middot; f / Z</div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 360 285" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="182" cy="26" r="9" fill="#fb923c"/><text x="182" y="30" font-family="DM Mono,monospace" font-size="8" fill="#fff" text-anchor="middle">X</text>
+        <line x1="40" y1="26" x2="325" y2="26" stroke="#fb923c" stroke-width="1" stroke-dasharray="3,3"/>
+        <line x1="108" y1="26" x2="154" y2="26" stroke="#34d399" stroke-width="2.5"/>
+        <polygon points="154,26 147,21 147,31" fill="#34d399"/>
+        <polygon points="108,26 115,21 115,31" fill="#34d399"/>
+        <text x="131" y="18" font-family="DM Mono,monospace" font-size="8" fill="#34d399" text-anchor="middle">a&#8321;</text>
+        <line x1="182" y1="26" x2="218" y2="26" stroke="#34d399" stroke-width="2.5"/>
+        <polygon points="182,26 189,21 189,31" fill="#34d399"/>
+        <polygon points="218,26 211,21 211,31" fill="#34d399"/>
+        <text x="200" y="18" font-family="DM Mono,monospace" font-size="8" fill="#34d399" text-anchor="middle">a&#8322;</text>
+        <line x1="108" y1="26" x2="108" y2="178" stroke="#3f5a72" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <line x1="262" y1="26" x2="262" y2="178" stroke="#3f5a72" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <text x="54" y="105" font-family="DM Mono,monospace" font-size="9" fill="#3f5a72">z</text>
+        <text x="330" y="105" font-family="DM Mono,monospace" font-size="9" fill="#3f5a72">z</text>
+        <line x1="36" y1="178" x2="170" y2="178" stroke="#38bdf8" stroke-width="2"/>
+        <line x1="193" y1="178" x2="327" y2="178" stroke="#a78bfa" stroke-width="2"/>
+        <text x="18" y="173" font-family="DM Mono,monospace" font-size="7" fill="#38bdf8">Cam1</text>
+        <text x="194" y="173" font-family="DM Mono,monospace" font-size="7" fill="#a78bfa">Cam2</text>
+        <line x1="108" y1="178" x2="108" y2="218" stroke="#38bdf844" stroke-width="1.5"/>
+        <text x="90" y="200" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72">f=1</text>
+        <line x1="262" y1="178" x2="262" y2="218" stroke="#a78bfa44" stroke-width="1.5"/>
+        <text x="267" y="200" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72">f=1</text>
+        <circle cx="134" cy="178" r="5" fill="#38bdf8"/><text x="134" y="166" font-family="DM Mono,monospace" font-size="9" fill="#38bdf8" text-anchor="middle">u&#8321;</text>
+        <circle cx="232" cy="178" r="5" fill="#a78bfa"/><text x="232" y="166" font-family="DM Mono,monospace" font-size="9" fill="#a78bfa" text-anchor="middle">u&#8322;</text>
+        <line x1="134" y1="150" x2="232" y2="150" stroke="#34d399" stroke-width="2.5"/>
+        <polygon points="232,150 225,144 225,156" fill="#34d399"/>
+        <polygon points="134,150 141,144 141,156" fill="#34d399"/>
+        <text x="183" y="142" font-family="DM Mono,monospace" font-size="8.5" fill="#34d399" text-anchor="middle">d = u&#8321; &minus; u&#8322;</text>
+        <circle cx="108" cy="218" r="6" fill="#38bdf8"/><text x="108" y="236" font-family="DM Mono,monospace" font-size="8" fill="#38bdf8" text-anchor="middle">O&#8321;</text>
+        <circle cx="262" cy="218" r="6" fill="#a78bfa"/><text x="262" y="236" font-family="DM Mono,monospace" font-size="8" fill="#a78bfa" text-anchor="middle">O&#8322;</text>
+        <line x1="114" y1="218" x2="256" y2="218" stroke="#fb923c" stroke-width="2.5"/>
+        <text x="183" y="250" font-family="DM Mono,monospace" font-size="8.5" fill="#fb923c" text-anchor="middle">a (baseline)</text>
+        <text x="50" y="268" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72">u&#8321;/1 = a&#8321;/z ,  u&#8322;/1 = a&#8322;/z</text>
+        <text x="50" y="280" font-family="DM Mono,monospace" font-size="7.5" fill="#34d399">d = u&#8321;&minus;u&#8322; = (a&#8321;+a&#8322;)/z = a/z</text>
+      </svg>
+      <div class="figcap">Similar triangles &rarr; d = a/z &rarr; depth z = a/d</div>
+    </div>
+  </div>
+</div>
+</div><!-- /bg-stereo -->
+</div><!-- /sec-bg -->
+
+<!-- ===================== Q1 ===================== -->
+<div class="section" id="sec-q1">
+<div class="sh">Q1 &mdash; <em>Essential and Fundamental Matrices</em></div>
+<div class="kicker">Problem Set &middot; Multiple View Geometry</div>
+
+<div class="card ca" style="margin-bottom:22px">
+  <div class="card-t">Setup &mdash; Given Essential Matrix E</div>
+  <div class="duo">
+    <div>
+      <p class="prose" style="margin-bottom:12px">Assume E presents the transformation between Camera 1 and Camera 2 frames:</p>
+      <div class="mxr">
+        <span style="color:var(--dim)">E =</span>
+        <div class="mx mx3">
+          <span>&minus;0.7</span><span>0.7</span><span class="mo">0</span>
+          <span>&minus;0.7</span><span>&minus;0.7</span><span class="mo">1.4</span>
+          <span>1</span><span>&minus;1</span><span class="mo">0</span>
+        </div>
+      </div>
+      <div class="note" style="margin-top:12px"><strong>Key formula:</strong> The Essential Matrix transforms a point in Camera&nbsp;1 to a line in Camera&nbsp;2:<br><span style="font-family:'DM Mono',monospace;color:var(--c3)">[l&#8321;, l&#8322;, l&#8323;]&sup1; = E &middot; [p&#8321;, p&#8322;, 1]&sup1;</span><br>The line equation is l&#8321;x + l&#8322;y + l&#8323; = 0.</div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 290 152" xmlns="http://www.w3.org/2000/svg">
+        <text x="145" y="16" font-family="DM Mono,monospace" font-size="8.5" fill="#3f5a72" text-anchor="middle">E &middot; p&#771; &mdash; column selection trick</text>
+        <rect x="10" y="26" width="120" height="92" rx="4" fill="#0c1219" stroke="#1b2d44"/>
+        <rect x="90" y="26" width="40" height="92" rx="0" fill="rgba(251,146,60,0.12)" stroke="#fb923c" stroke-width="1"/>
+        <text x="37" y="44" font-family="DM Mono,monospace" font-size="7" fill="#38bdf8" text-anchor="middle">col 1</text>
+        <text x="70" y="44" font-family="DM Mono,monospace" font-size="7" fill="#38bdf8" text-anchor="middle">col 2</text>
+        <text x="110" y="44" font-family="DM Mono,monospace" font-size="7" fill="#fb923c" text-anchor="middle">col 3 &starf;</text>
+        <text x="37" y="64" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">&minus;0.7</text>
+        <text x="70" y="64" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">0.7</text>
+        <text x="110" y="64" font-family="DM Mono,monospace" font-size="7.5" fill="#fb923c" text-anchor="middle">0</text>
+        <text x="37" y="84" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">&minus;0.7</text>
+        <text x="70" y="84" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">&minus;0.7</text>
+        <text x="110" y="84" font-family="DM Mono,monospace" font-size="7.5" fill="#fb923c" text-anchor="middle">1.4</text>
+        <text x="37" y="104" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">1</text>
+        <text x="70" y="104" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">&minus;1</text>
+        <text x="110" y="104" font-family="DM Mono,monospace" font-size="7.5" fill="#fb923c" text-anchor="middle">0</text>
+        <text x="138" y="78" font-family="DM Mono,monospace" font-size="13" fill="#3f5a72">&times;</text>
+        <rect x="150" y="42" width="26" height="72" rx="3" fill="#0c1219" stroke="#fb923c" stroke-width="1"/>
+        <text x="163" y="66" font-family="DM Mono,monospace" font-size="8.5" fill="#3f5a72" text-anchor="middle">0</text>
+        <text x="163" y="84" font-family="DM Mono,monospace" font-size="8.5" fill="#3f5a72" text-anchor="middle">0</text>
+        <text x="163" y="102" font-family="DM Mono,monospace" font-size="8.5" fill="#fb923c" text-anchor="middle">1</text>
+        <text x="184" y="78" font-family="DM Mono,monospace" font-size="13" fill="#3f5a72">=</text>
+        <rect x="196" y="42" width="30" height="72" rx="3" fill="#0c1219" stroke="#34d399" stroke-width="1"/>
+        <text x="211" y="66" font-family="DM Mono,monospace" font-size="8.5" fill="#34d399" text-anchor="middle">0</text>
+        <text x="211" y="84" font-family="DM Mono,monospace" font-size="8.5" fill="#34d399" text-anchor="middle">1.4</text>
+        <text x="211" y="102" font-family="DM Mono,monospace" font-size="8.5" fill="#34d399" text-anchor="middle">0</text>
+        <text x="238" y="80" font-family="DM Mono,monospace" font-size="7.5" fill="#fb923c">= col 3</text>
+        <text x="238" y="138" font-family="DM Mono,monospace" font-size="7" fill="#3f5a72">p&#771;=[0,0,1]&sup1; selects</text>
+        <text x="238" y="150" font-family="DM Mono,monospace" font-size="7" fill="#3f5a72">column 3 of E</text>
+      </svg>
+      <div class="figcap">p&#771;=[0,0,1]&sup1; multiplies E &rarr; picks out the 3rd column</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div><span class="badge ba">Q1.1</span>&ensp;<span class="card-t" style="display:inline">Epipolar line for p = (0, 0)</span></div>
+    <button class="sol-btn" id="b11" onclick="toggleSol('s11','b11')">&#9654; Show Solution</button>
+  </div>
+  <p class="prose">Calculate the epipolar line in image 2 corresponding to point p&nbsp;=&nbsp;(0,&nbsp;0) in image 1 (normalised camera coordinates).</p>
+  <div class="sol-body" id="s11">
+    <div class="sol-tag">Solution</div>
+    <div class="g2">
+      <div>
+        <div class="mxr">
+          <div class="mx mx3"><span>&minus;0.7</span><span>0.7</span><span class="mo">0</span><span>&minus;0.7</span><span>&minus;0.7</span><span class="mo">1.4</span><span>1</span><span>&minus;1</span><span class="mo">0</span></div>
+          <span class="mop">&middot;</span>
+          <div class="mx mx1"><span>0</span><span>0</span><span class="mo">1</span></div>
+          <span class="mop">=</span>
+          <div class="mx mx1"><span class="mg">0</span><span class="mg">1.4</span><span class="mg">0</span></div>
+        </div>
+        <div class="mth" style="margin-top:10px">
+          <span class="z">// Line: l&#8321;x + l&#8322;y + l&#8323; = 0</span><br>
+          <span class="o">0&middot;x + 1.4&middot;y + 0 = 0</span><br>
+          <span class="g">&#8756; y = 0 &ensp;(horizontal line through origin)</span>
+        </div>
+        <div class="why"><strong>Why does p&#771;=[0,0,1]&sup1; select column&nbsp;3?</strong> E&middot;[0,0,1]&sup1;&nbsp;=&nbsp;0&middot;col&#8321;&nbsp;+&nbsp;0&middot;col&#8322;&nbsp;+&nbsp;1&middot;col&#8323;&nbsp;=&nbsp;col&#8323;. The standard basis vector e&#8323; always extracts the 3rd column.</div>
+      </div>
+      <div><canvas id="c11" width="260" height="210"></canvas><p class="clab">Camera 2 &mdash; epipolar line y = 0</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div><span class="badge bp">Q1.2</span>&ensp;<span class="card-t" style="display:inline">Epipolar line for p = (1, 0)</span></div>
+    <button class="sol-btn" id="b12" onclick="toggleSol('s12','b12')">&#9654; Show Solution</button>
+  </div>
+  <p class="prose">What is the epipolar line in Camera 2 when p&nbsp;=&nbsp;(1,&nbsp;0)?</p>
+  <div class="sol-body" id="s12">
+    <div class="sol-tag">Solution</div>
+    <div class="mxr">
+      <div class="mx mx3"><span>&minus;0.7</span><span>0.7</span><span>0</span><span>&minus;0.7</span><span>&minus;0.7</span><span>1.4</span><span>1</span><span>&minus;1</span><span>0</span></div>
+      <span class="mop">&middot;</span>
+      <div class="mx mx1"><span>1</span><span>0</span><span>1</span></div>
+      <span class="mop">=</span>
+      <div class="mx mx1"><span class="mg">&minus;0.7</span><span class="mg">0.7</span><span class="mg">1</span></div>
+    </div>
+    <div class="mth" style="margin-top:10px">
+      <span class="o">&minus;0.7x + 0.7y + 1 = 0</span><br>
+      0.7y = 0.7x &minus; 1<br>
+      <span class="g">&#8756; y = x &minus; 10/7 &asymp; x &minus; 1.43</span>
+    </div>
+  </div>
+</div>
+
+<div class="card co">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div><span class="badge bo">Q1.3 &amp; Q1.4</span>&ensp;<span class="card-t" style="display:inline">p = (1,1) is the epipole</span></div>
+    <button class="sol-btn" style="border-color:var(--c3);color:var(--c3)" id="b13" onclick="toggleSol('s13','b13')">&#9654; Show Solution</button>
+  </div>
+  <p class="prose">What if p&nbsp;=&nbsp;(1,&nbsp;1)? Which of Q1.1&ndash;Q1.3 is the epipole in image&nbsp;1, and why?</p>
+  <div class="sol-body" id="s13" style="border-color:rgba(251,146,60,.2)">
+    <div class="sol-tag" style="color:var(--c3)">Solution</div>
+    <div class="g2">
+      <div>
+        <div class="mxr">
+          <div class="mx mx3"><span>&minus;0.7</span><span class="mo">0.7</span><span>0</span><span>&minus;0.7</span><span class="mo">&minus;0.7</span><span>1.4</span><span>1</span><span class="mo">&minus;1</span><span>0</span></div>
+          <span class="mop">&middot;</span>
+          <div class="mx mx1"><span>1</span><span class="mo">1</span><span>1</span></div>
+          <span class="mop">=</span>
+          <div class="mx mx1"><span class="mg">0</span><span class="mg">0</span><span class="mg">0</span></div>
+        </div>
+        <div class="mth" style="margin-top:10px">
+          E&middot;[1,1,1]&sup1; = <span class="g">[0, 0, 0]&sup1;</span><br>
+          <span class="z">// Line: 0x+0y+0 = 0 &rarr; satisfied everywhere &rarr; no constraint</span><br>
+          <span class="g">&#8756; p = (1,1) is the epipole e&#8321; in image 1</span>
+        </div>
+        <div class="why"><strong>Why?</strong> The epipole e&#8321; is in E&rsquo;s null space (Ee&#8321;&nbsp;=&nbsp;0). When p&nbsp;=&nbsp;e&#8321;, the ray through e&#8321; points along the baseline t. Then Rp&#771;&nbsp;&parallel;&nbsp;t, so t&times;Rp&#771;&nbsp;=&nbsp;0 &mdash; no epipolar line exists.</div>
+      </div>
+      <div><canvas id="c13" width="260" height="210"></canvas><p class="clab">e&#8321;&nbsp;=&nbsp;(1,1) &mdash; all epipolar lines converge here</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="card cg">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div><span class="badge bg">Q1.5 &amp; Q1.6</span>&ensp;<span class="card-t" style="display:inline">Epipole in image 2</span></div>
+    <button class="sol-btn" style="border-color:var(--c4);color:var(--c4)" id="b15" onclick="toggleSol('s15','b15')">&#9654; Show Solution</button>
+  </div>
+  <p class="prose">Compute the position of e&#8322; in image&nbsp;2. Show the lines from Q1.1&ndash;Q1.2 and mark e&#8322; on the image plane.</p>
+  <div class="sol-body" id="s15" style="border-color:rgba(52,211,153,.2)">
+    <div class="sol-tag" style="color:var(--c4)">Solution &mdash; intersection of epipolar lines</div>
+    <div class="g2">
+      <div>
+        <div class="mth">
+          <span class="z">// Q1.1 line: y = 0</span><br>
+          <span class="z">// Q1.2 line: &minus;0.7x + 0.7y + 1 = 0</span><br><br>
+          Substitute y = 0 into Q1.2:<br>
+          &nbsp;&minus;0.7x + 1 = 0 &rarr; x = 1/0.7 = <span class="g">10/7 &asymp; 1.43</span><br><br>
+          <span class="g">&#8756; e&#8322; = (1.43, 0)</span>
+        </div>
+        <div class="ok"><strong>Why intersection = epipole?</strong> Every epipolar line in Camera&nbsp;2 passes through e&#8322;. Any two valid epipolar lines share exactly e&#8322; as their intersection.</div>
+      </div>
+      <div><canvas id="c15" width="260" height="210"></canvas><p class="clab">Blue: y=0 &middot; Purple dashed: y=x&minus;1.43 &middot; &times;: e&#8322;&nbsp;=&nbsp;(1.43,&nbsp;0)</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="card cy">
+  <div class="card-t">Interactive &mdash; Drag the 3D point, watch the epipolar line update</div>
+  <div class="cw">
+    <canvas id="epiDemo" width="840" height="290"></canvas>
+    <p class="clab">Drag the orange X &middot; Left = Camera 1 &middot; Right = Camera 2 &middot; Epipolar line updates in real time</p>
+  </div>
+</div>
+</div><!-- /sec-q1 -->
+
+<!-- ===================== Q2 ===================== -->
+<div class="section" id="sec-q2">
+<div class="sh">Q2 &mdash; <em>Triangulating Depth</em></div>
+<div class="kicker">Problem Set &middot; Stereo Camera</div>
+
+<div class="card ca" style="margin-bottom:22px">
+  <div class="card-t">Setup &mdash; Stereo camera parameters</div>
+  <div class="duo">
+    <div class="prose">
+      <p style="margin-bottom:10px">A stereo camera pair with:</p>
+      <table>
+        <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Focal length f</td><td class="tb">500 pixels</td></tr>
+          <tr><td>Baseline b</td><td class="tb">10 cm = 0.1 m</td></tr>
+          <tr><td>Camera orientation</td><td class="tb">parallel (pure x-axis translation)</td></tr>
+        </tbody>
+      </table>
+      <div class="note" style="margin-top:10px"><strong>Formula from derivation (lecture notes &sect;1.3):</strong><br>
+      <span style="font-family:'DM Mono',monospace;font-size:.9rem;color:var(--c3)">d = (a&#8321; + a&#8322;)/Z &middot; f = b/Z &middot; f</span><br><br>
+      Substituting b = 0.1 m, f = 500 px:<br>
+      <span style="font-family:'DM Mono',monospace;color:var(--c4)">d = (0.1 &times; 500) / Z = 50 / Z</span></div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 310 182" xmlns="http://www.w3.org/2000/svg">
+        <text x="155" y="15" font-family="DM Mono,monospace" font-size="8.5" fill="#3f5a72" text-anchor="middle">d = b&middot;f / Z &mdash; all parameters plug in directly</text>
+        <rect x="20" y="28" width="130" height="52" rx="5" fill="#162034" stroke="#fb923c" stroke-width="1.5"/>
+        <text x="85" y="46" font-family="DM Mono,monospace" font-size="9" fill="#fb923c" text-anchor="middle">b = 0.1 m</text>
+        <text x="85" y="60" font-family="DM Mono,monospace" font-size="9" fill="#fb923c" text-anchor="middle">f = 500 px</text>
+        <text x="85" y="74" font-family="DM Mono,monospace" font-size="8" fill="#3f5a72" text-anchor="middle">b&middot;f = 50 px&middot;m</text>
+        <text x="158" y="58" font-family="DM Mono,monospace" font-size="16" fill="#3f5a72">&divide;</text>
+        <rect x="170" y="28" width="120" height="52" rx="5" fill="#162034" stroke="#38bdf8" stroke-width="1.5"/>
+        <text x="230" y="50" font-family="DM Mono,monospace" font-size="9" fill="#38bdf8" text-anchor="middle">Z (depth in m)</text>
+        <text x="230" y="70" font-family="DM Mono,monospace" font-size="8" fill="#3f5a72" text-anchor="middle">1, 2, 5, 10 m</text>
+        <rect x="60" y="102" width="190" height="36" rx="5" fill="rgba(52,211,153,.1)" stroke="#34d399" stroke-width="1.5"/>
+        <text x="155" y="117" font-family="DM Mono,monospace" font-size="9" fill="#34d399" text-anchor="middle">d = 50 / Z &ensp;(pixels)</text>
+        <text x="155" y="130" font-family="DM Mono,monospace" font-size="7.5" fill="#3f5a72" text-anchor="middle">inverse: close objects &rarr; large disparity</text>
+        <text x="155" y="170" font-family="DM Mono,monospace" font-size="7.5" fill="#38bdf888" text-anchor="middle">d = 50/Z curve (hyperbola)</text>
+      </svg>
+      <div class="figcap">Disparity d = b&middot;f/Z &mdash; all parameters known, solve for d</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div><span class="badge ba">Q2.1&ndash;2.4</span>&ensp;<span class="card-t" style="display:inline">Disparity at four depths</span></div>
+    <button class="sol-btn" id="b21" onclick="toggleSol('s21','b21')">&#9654; Show All Solutions</button>
+  </div>
+  <p class="prose">For a stereo camera pair with f&nbsp;=&nbsp;500&nbsp;px and b&nbsp;=&nbsp;0.1&nbsp;m, calculate the observed disparity for world points at Z&nbsp;=&nbsp;1m, 2m, 5m, and 10m.</p>
+  <div class="sol-body" id="s21">
+    <div class="sol-tag">Solution &mdash; using d = b&middot;f / Z = 50 / Z</div>
+    <div class="g2">
+      <div>
+        <div class="mth">
+          <span class="z">// d = b&middot;f/Z = (0.1 &times; 500) / Z = 50/Z</span><br><br>
+          Z = 1m: &ensp;d = 50/1 = <span class="g">50 px</span><br>
+          Z = 2m: &ensp;d = 50/2 = <span class="g">25 px</span><br>
+          Z = 5m: &ensp;d = 50/5 = <span class="g">10 px</span><br>
+          Z = 10m: d = 50/10 = <span class="g">5 px</span>
+        </div>
+        <table style="margin-top:10px">
+          <thead><tr><th>Z</th><th>d = 50/Z</th><th>Depth error per 1-pixel error</th></tr></thead>
+          <tbody>
+            <tr><td>1 m</td><td class="tg">50 px</td><td style="color:var(--dim)">0.02 m</td></tr>
+            <tr><td>2 m</td><td class="tg">25 px</td><td style="color:var(--dim)">0.08 m</td></tr>
+            <tr><td>5 m</td><td class="tg">10 px</td><td style="color:var(--dim)">0.50 m</td></tr>
+            <tr><td>10 m</td><td class="tg">5 px</td><td class="tp">2.0 m &larr; dangerous!</td></tr>
+          </tbody>
+        </table>
+        <div class="why" style="margin-top:8px"><strong>Accuracy degrades fast:</strong> At 10m disparity is only 5 pixels. A single pixel of detection error causes a 2m depth error. Stereo reconstruction accuracy is strongly depth-dependent.</div>
+      </div>
+      <div><canvas id="curvePlot" width="260" height="220"></canvas><p class="clab">d = 50/Z hyperbola &middot; yellow dots = four answers</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="card cg">
+  <div class="card-t">Interactive Depth Explorer</div>
+  <div class="ctrls">
+    <div>
+      <label class="lbl">Depth Z (m)</label>
+      <input type="range" id="zSlider" min="0.5" max="20" step="0.25" value="1" style="width:200px" oninput="updateQ2()">
+      <span class="vd" id="zVal">1.0 m</span>
+    </div>
+  </div>
+  <div style="font-family:'DM Mono',monospace;font-size:.92rem;margin:8px 0;display:flex;gap:12px;align-items:center">
+    <span style="color:var(--dim)">d = 50 / Z =</span>
+    <span style="color:var(--c4);font-size:1.12rem" id="dVal">50.0 px</span>
+  </div>
+  <div class="dbar-bg"><div class="dbar-fill" id="dBar" style="width:100%"></div></div>
+  <canvas id="stereoViz" width="800" height="180" style="max-width:100%;margin-top:12px;border-radius:8px"></canvas>
+</div>
+</div><!-- /sec-q2 -->
+
+</div><!-- /wrap -->
+
+<script>
+
+function goSec(id,btn){document.querySelectorAll('.section').forEach(s=>s.classList.remove('on'));document.querySelectorAll('.sec-nav button').forEach(b=>b.classList.remove('on'));document.getElementById('sec-'+id).classList.add('on');btn.classList.add('on');if(id==='q1')setTimeout(()=>{dC11();dC13();dC15();initEpi();},50);if(id==='q2')setTimeout(()=>{updateQ2();drawCurve();},50);}
+function goPanel(sec,id,btn){document.querySelectorAll('#sec-'+sec+' .panel').forEach(p=>p.classList.remove('on'));document.querySelectorAll('#sec-'+sec+' .sub-btn').forEach(b=>b.classList.remove('on'));document.getElementById(sec+'-'+id).classList.add('on');btn.classList.add('on');}
+function toggleSol(solId,btnId){const sol=document.getElementById(solId),btn=document.getElementById(btnId),show=!sol.classList.contains('show');sol.classList.toggle('show',show);btn.textContent=show?'\u25BE Hide Solution':'\u25B6 Show Solution';btn.classList.toggle('done',show);if(show){if(solId==='s11')setTimeout(dC11,50);if(solId==='s13')setTimeout(dC13,50);if(solId==='s15')setTimeout(dC15,50);if(solId==='s21')setTimeout(drawCurve,50);}}
+function axCv(ctx,W,H,ox,oy,sc){ctx.fillStyle='#0c1219';ctx.fillRect(0,0,W,H);ctx.strokeStyle='#1b2d44';ctx.lineWidth=1;for(let i=-3;i<=3;i++){ctx.beginPath();ctx.moveTo(ox+i*sc,8);ctx.lineTo(ox+i*sc,H-8);ctx.stroke();ctx.beginPath();ctx.moveTo(8,oy+i*sc);ctx.lineTo(W-8,oy+i*sc);ctx.stroke();}ctx.strokeStyle='#233552';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(8,oy);ctx.lineTo(W-8,oy);ctx.stroke();ctx.beginPath();ctx.moveTo(ox,8);ctx.lineTo(ox,H-8);ctx.stroke();ctx.fillStyle='#3f5a72';ctx.font='8px DM Mono,monospace';ctx.textAlign='center';for(let i=-2;i<=2;i++){if(i!==0){ctx.fillText(i,ox+i*sc,oy+13);ctx.textAlign='right';ctx.fillText(-i,ox-4,oy+i*sc+4);ctx.textAlign='center';}}}
+function dC11(){const cv=document.getElementById('c11');if(!cv)return;const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,ox=W/2,oy=H/2,sc=62;axCv(ctx,W,H,ox,oy,sc);ctx.strokeStyle='#38bdf8';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(8,oy);ctx.lineTo(W-8,oy);ctx.stroke();ctx.fillStyle='#38bdf8';ctx.font='10px DM Mono,monospace';ctx.textAlign='left';ctx.fillText('y = 0',14,oy-8);}
+function dC13(){const cv=document.getElementById('c13');if(!cv)return;const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,ox=W/2,oy=H/2,sc=55,ex=ox+sc,ey=oy-sc;axCv(ctx,W,H,ox,oy,sc);[1,1.5,0.5,-0.5,2.2,-1.2].forEach((s,i)=>{ctx.strokeStyle=i<4?'#38bdf8cc':'#38bdf844';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(8,ey-(8-ex)*s);ctx.lineTo(W-8,ey-(W-8-ex)*s);ctx.stroke();});ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(ex,ey,8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fbbf24';ctx.font='10px DM Mono,monospace';ctx.textAlign='left';ctx.fillText('e\u2081=(1,1)',ex+10,ey-4);}
+function dC15(){const cv=document.getElementById('c15');if(!cv)return;const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,ox=36,oy=H/2,sc=66;axCv(ctx,W,H,ox,oy,sc);ctx.strokeStyle='#38bdf8';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(8,oy);ctx.lineTo(W-8,oy);ctx.stroke();ctx.fillStyle='#38bdf8';ctx.font='9px DM Mono,monospace';ctx.textAlign='left';ctx.fillText('y=0',14,oy-8);ctx.strokeStyle='#a78bfa';ctx.lineWidth=2.5;ctx.setLineDash([7,4]);ctx.beginPath();ctx.moveTo(8,oy-(8-ox)/sc*sc+1.43*sc);ctx.lineTo(W-8,oy-(W-8-ox)/sc*sc+1.43*sc);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#a78bfa';ctx.font='9px DM Mono,monospace';ctx.fillText('y=x\u22121.43',12,H-22);const ex2=ox+1.43*sc;ctx.strokeStyle='#fbbf24';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(ex2-9,oy-9);ctx.lineTo(ex2+9,oy+9);ctx.stroke();ctx.beginPath();ctx.moveTo(ex2+9,oy-9);ctx.lineTo(ex2-9,oy+9);ctx.stroke();ctx.fillStyle='#fbbf24';ctx.font='9px DM Mono,monospace';ctx.textAlign='left';ctx.fillText('e\u2082\u2248(1.43,0)',ex2+8,oy-12);}
+let ep={x:420,y:88},isDrag=false;
+function initEpi(){const cv=document.getElementById('epiDemo');if(!cv||cv._init)return;cv._init=true;cv.addEventListener('mousedown',e=>{const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)*(cv.width/r.width),my=(e.clientY-r.top)*(cv.height/r.height);if(Math.hypot(mx-ep.x,my-ep.y)<22)isDrag=true;});cv.addEventListener('mousemove',e=>{if(!isDrag)return;const r=cv.getBoundingClientRect();ep.x=(e.clientX-r.left)*(cv.width/r.width);ep.y=(e.clientY-r.top)*(cv.height/r.height);drawEpi();});cv.addEventListener('mouseup',()=>isDrag=false);cv.addEventListener('touchstart',e=>{e.preventDefault();const r=cv.getBoundingClientRect(),t=e.touches[0];if(Math.hypot((t.clientX-r.left)*(cv.width/r.width)-ep.x,(t.clientY-r.top)*(cv.height/r.height)-ep.y)<28)isDrag=true;},{passive:false});cv.addEventListener('touchmove',e=>{e.preventDefault();if(!isDrag)return;const r=cv.getBoundingClientRect(),t=e.touches[0];ep.x=(t.clientX-r.left)*(cv.width/r.width);ep.y=(t.clientY-r.top)*(cv.height/r.height);drawEpi();},{passive:false});cv.addEventListener('touchend',()=>isDrag=false);drawEpi();}
+function drawEpi(){const cv=document.getElementById('epiDemo');if(!cv)return;const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.fillStyle='#0c1219';ctx.fillRect(0,0,W,H);const mid=W/2,camY=H-32,imgY=H-72,c1x=165,c2x=mid+245;function iP(cx,col,lbl){ctx.fillStyle=col+'10';ctx.fillRect(cx-64,imgY,128,48);ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.strokeRect(cx-64,imgY,128,48);ctx.fillStyle=col;ctx.font='9px DM Mono,monospace';ctx.textAlign='center';ctx.fillText(lbl,cx,imgY-7);}iP(c1x,'#38bdf8','Camera 1');iP(c2x,'#a78bfa','Camera 2');[c1x,c2x].forEach((cx,i)=>{ctx.fillStyle=['#38bdf8','#a78bfa'][i];ctx.beginPath();ctx.arc(cx,camY,8,0,Math.PI*2);ctx.fill();ctx.fillStyle=['#38bdf8','#a78bfa'][i];ctx.font='9px DM Mono,monospace';ctx.textAlign='center';ctx.fillText(['O\u2081','O\u2082'][i],cx,camY+16);});ctx.strokeStyle='#1b2d44';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(c1x,camY+8);ctx.lineTo(c2x,camY+8);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#fb923c';ctx.beginPath();ctx.arc(ep.x,ep.y,12,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fb923c';ctx.font='bold 10px DM Mono,monospace';ctx.textAlign='left';ctx.fillText('X  (drag)',ep.x+15,ep.y+4);ctx.fillStyle='rgba(56,189,248,0.04)';ctx.beginPath();ctx.moveTo(c1x,camY);ctx.lineTo(ep.x,ep.y);ctx.lineTo(c2x,camY);ctx.closePath();ctx.fill();ctx.setLineDash([6,4]);ctx.strokeStyle='#38bdf855';ctx.lineWidth=1.5;const ex1=c1x+(ep.x-c1x)*3,ey1=camY+(ep.y-camY)*3;ctx.beginPath();ctx.moveTo(c1x,camY);ctx.lineTo(ex1,ey1);ctx.stroke();ctx.strokeStyle='#a78bfa55';ctx.beginPath();ctx.moveTo(c2x,camY);ctx.lineTo(ep.x,ep.y);ctx.stroke();ctx.setLineDash([]);const imgMid=imgY+24,t1=(imgMid-camY)/((ep.y-camY)||0.001),p1x=Math.max(c1x-60,Math.min(c1x+60,c1x+t1*(ep.x-c1x)));ctx.fillStyle='#38bdf8';ctx.beginPath();ctx.arc(p1x,imgMid,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#38bdf8';ctx.font='9px DM Mono,monospace';ctx.textAlign='center';ctx.fillText('p',p1x,imgMid-11);const sl=(ep.x-c2x)/((ep.y-camY)||1)*0.4;ctx.strokeStyle='#a78bfa';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(c2x-62,imgMid+62*sl);ctx.lineTo(c2x+62,imgMid-62*sl);ctx.stroke();const t2=(imgMid-camY)/((ep.y-camY)||0.001),p2x=Math.max(c2x-60,Math.min(c2x+60,c2x+t2*(ep.x-c2x)));ctx.fillStyle='#a78bfa';ctx.beginPath();ctx.arc(p2x,imgMid,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#a78bfa';ctx.font='9px DM Mono,monospace';ctx.textAlign='center';ctx.fillText('q',p2x,imgMid-11);ctx.fillStyle='#a78bfa';ctx.font='8px DM Mono,monospace';ctx.fillText('epipolar line',c2x,imgY-7);ctx.fillStyle='#3f5a72';ctx.font='8.5px DM Mono,monospace';ctx.textAlign='center';ctx.fillText('Drag X \u2014 q must always stay on the epipolar line (any depth)',W/2,H-5);}
+function updateQ2(){const Z=parseFloat(document.getElementById('zSlider').value),d=(0.1*500)/Z;document.getElementById('zVal').textContent=Z.toFixed(2)+' m';document.getElementById('dVal').textContent=d.toFixed(1)+' px';document.getElementById('dBar').style.width=Math.min(100,(d/50)*100)+'%';drawStereo(Z,d);}
+function drawStereo(Z,d){const cv=document.getElementById('stereoViz');if(!cv)return;const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);ctx.fillStyle='#0c1219';ctx.fillRect(0,0,W,H);const c1x=W/2-130,c2x=W/2+130,camY=H-26,imgY=H-64,ptY=32+Math.min(((Z-0.5)/19.5)*82,82);[c1x,c2x].forEach((cx,i)=>{ctx.fillStyle=['#38bdf8','#a78bfa'][i];ctx.beginPath();ctx.arc(cx,camY,7,0,Math.PI*2);ctx.fill();ctx.fillStyle=['#38bdf8','#a78bfa'][i];ctx.font='9px DM Mono,monospace';ctx.textAlign='center';ctx.fillText(['Cam 1','Cam 2'][i],cx,camY+16);});ctx.strokeStyle='#fb923c';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(c1x,camY+7);ctx.lineTo(c2x,camY+7);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#fb923c';ctx.font='8px DM Mono,monospace';ctx.textAlign='center';ctx.fillText('b=0.1m',W/2,camY+18);ctx.fillStyle='#fb923c';ctx.beginPath();ctx.arc(W/2,ptY,10,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fb923c';ctx.font='9px DM Mono,monospace';ctx.textAlign='center';ctx.fillText('Z='+Z.toFixed(1)+'m',W/2,ptY-14);ctx.setLineDash([5,4]);['#38bdf855','#a78bfa55'].forEach((col,i)=>{ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo([c1x,c2x][i],camY);ctx.lineTo(W/2,ptY);ctx.stroke();});ctx.setLineDash([]);ctx.strokeStyle='#1b2d44';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(c1x-80,imgY);ctx.lineTo(c2x+80,imgY);ctx.stroke();const maxD=50,dViz=Math.min((d/maxD)*130,128),p1x=W/2-dViz/2,p2x=W/2+dViz/2;ctx.fillStyle='#38bdf8';ctx.beginPath();ctx.arc(p1x,imgY,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#a78bfa';ctx.beginPath();ctx.arc(p2x,imgY,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#38bdf8';ctx.font='8px DM Mono,monospace';ctx.textAlign='center';ctx.fillText('u\u2081',p1x,imgY+13);ctx.fillStyle='#a78bfa';ctx.fillText('u\u2082',p2x,imgY+13);if(dViz>6){ctx.strokeStyle='#34d399';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p1x,imgY-15);ctx.lineTo(p2x,imgY-15);ctx.stroke();ctx.fillStyle='#34d399';ctx.font='bold 9px DM Mono,monospace';ctx.textAlign='center';ctx.fillText('d='+d.toFixed(1)+'px',(p1x+p2x)/2,imgY-23);}else{ctx.fillStyle='#f472b6';ctx.font='8px DM Mono,monospace';ctx.textAlign='center';ctx.fillText('d='+d.toFixed(2)+'px (sub-pixel!)',W/2,imgY-20);}}
+function drawCurve(){const cv=document.getElementById('curvePlot');if(!cv)return;const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.fillStyle='#0c1219';ctx.fillRect(0,0,W,H);const pL=42,pR=12,pT=16,pB=30,pw=W-pL-pR,ph=H-pT-pB,maxZ=14,maxD=55;ctx.strokeStyle='#1b2d4433';ctx.lineWidth=1;[0,2,4,6,8,10,12,14].forEach(z=>{const x=pL+(z/maxZ)*pw;ctx.beginPath();ctx.moveTo(x,pT);ctx.lineTo(x,pT+ph);ctx.stroke();ctx.fillStyle='#3f5a72';ctx.font='7.5px DM Mono,monospace';ctx.textAlign='center';ctx.fillText(z+'m',x,pT+ph+12);});[0,10,20,30,40,50].forEach(d=>{const y=pT+ph-(d/maxD)*ph;ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(pL+pw,y);ctx.stroke();ctx.fillStyle='#3f5a72';ctx.textAlign='right';ctx.fillText(d,pL-4,y+3);});ctx.strokeStyle='#38bdf8';ctx.lineWidth=2.5;ctx.beginPath();let first=true;for(let z=0.4;z<=maxZ;z+=0.05){const d=50/z,x=pL+(z/maxZ)*pw,y=pT+ph-(d/maxD)*ph;if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);}ctx.stroke();[[1,50],[2,25],[5,10],[10,5]].forEach(([z,d])=>{const x=pL+(z/maxZ)*pw,y=pT+ph-(d/maxD)*ph;ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#fbbf2444';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.beginPath();ctx.moveTo(pL,y);ctx.lineTo(x,y);ctx.stroke();ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,pT+ph);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#fbbf24';ctx.font='7.5px DM Mono,monospace';ctx.textAlign=z<=5?'left':'right';ctx.fillText('('+z+'m,'+d+'px)',x+(z<=5?6:-6),y-5);});ctx.fillStyle='#7d9db5';ctx.font='8px DM Mono,monospace';ctx.textAlign='right';ctx.fillText('d=50/Z',pL+pw-2,pT+11);}
+window.addEventListener('load',()=>{updateQ2();});
+
+</script>
+</body>
+</html>
