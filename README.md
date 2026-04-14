@@ -3,7 +3,6 @@
 > **If you're struggling with the problem sets... welcome!**
 > Visual walkthroughs, interactive diagrams, and step-by-step solutions — built by a student, for students.
 
-🌐 **Live site:** [lucy-kim030.github.io/ece4076-ProblemSets-guidance](https://lucy-kim030.github.io/ece4076-ProblemSets-guidance)
 
 ---
 
