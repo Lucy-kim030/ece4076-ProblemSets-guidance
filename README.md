@@ -28,7 +28,7 @@ Each page covers:
 
 ## 🛠️ Built with
 
-Pure HTML + CSS + vanilla JavaScript — no frameworks, no build step. Every page is a single self-contained `.html` file so it works offline too.
+ HTML + CSS + vanilla JavaScript. Every page is a single self-contained `.html` file so it works offline too.
 
 ---
 
@@ -38,4 +38,4 @@ This is an unofficial student resource and is **not affiliated with Monash Unive
 
 ---
 
-*Made with ☕ and too many SVG diagrams.*
+*Made with Claude, ☕ and too many SVG diagrams.*
