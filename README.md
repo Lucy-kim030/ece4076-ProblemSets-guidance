@@ -12,6 +12,8 @@
 |------|-------|------|
 | Week 5 | Projection, Vanishing Points & Homography | [Open →](https://lucy-kim030.github.io/ece4076-ProblemSets-guidance/W5/) |
 | Week 6 | Multiple View Geometry & 3D Reconstruction | [Open →](https://lucy-kim030.github.io/ece4076-ProblemSets-guidance/W6/) |
+| Week 7 | Unsupervised Learning | [Open →](https://lucy-kim030.github.io/ece4076-ProblemSets-guidance/W7/) |
+
 
 More weeks coming as the course progresses.
 
