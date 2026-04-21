@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>W7 · Unsupervised Learning · ECE4076</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,800;1,300&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sun: #FFB800; --sky: #E8F4FD; --ocean: #0077B6; --deep: #023E8A;
+    --mint: #52B788; --coral: #FF6B6B; --sand: #FFF8E7; --ink: #1A1A2E;
+    --mist: #F0F4F8; --border: #DCE4EE; --text: #2D3748; --sub: #718096;
+    --card: #FFFFFF; --r: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--sand); color: var(--text); font-size: 16px; line-height: 1.7; }
+
+  .hero { background: linear-gradient(135deg, var(--deep) 0%, var(--ocean) 60%, #0096C7 100%); color: white; padding: 64px 40px 80px; position: relative; overflow: hidden; }
+  .hero::before { content:''; position:absolute; top:-80px; right:-80px; width:320px; height:320px; background:radial-gradient(circle, rgba(255,184,0,0.25) 0%, transparent 70%); border-radius:50%; }
+  .hero::after { content:''; position:absolute; bottom:-40px; left:10%; width:200px; height:200px; background:radial-gradient(circle, rgba(82,183,136,0.2) 0%, transparent 70%); border-radius:50%; }
+  .hero-inner { max-width:960px; margin:0 auto; position:relative; z-index:1; }
+  .week-badge { display:inline-block; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); border-radius:100px; padding:5px 18px; font-size:13px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:20px; }
+  .hero h1 { font-family:'Fraunces',serif; font-size:clamp(36px,6vw,62px); font-weight:800; line-height:1.1; margin-bottom:16px; }
+  .hero h1 em { color:var(--sun); font-style:italic; }
+  .hero p { font-size:18px; opacity:0.85; max-width:560px; font-weight:300; }
+  .hero-tags { display:flex; flex-wrap:wrap; gap:10px; margin-top:28px; }
+  .tag { background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.25); border-radius:8px; padding:6px 14px; font-size:13px; font-family:'DM Mono',monospace; }
+
+  .toc { background:var(--ocean); position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,119,182,0.3); }
+  .toc-inner { max-width:960px; margin:0 auto; display:flex; overflow-x:auto; scrollbar-width:none; }
+  .toc-inner::-webkit-scrollbar { display:none; }
+  .toc a { color:rgba(255,255,255,0.75); text-decoration:none; padding:14px 18px; font-size:13px; font-weight:500; white-space:nowrap; border-bottom:3px solid transparent; transition:all 0.2s; display:flex; align-items:center; gap:6px; }
+  .toc a:hover { color:white; border-bottom-color:var(--sun); background:rgba(255,255,255,0.08); }
+  .toc a .num { background:rgba(255,255,255,0.15); border-radius:4px; padding:1px 6px; font-family:'DM Mono',monospace; font-size:11px; }
+
+  .container { max-width:960px; margin:0 auto; padding:0 24px; }
+  section { padding:52px 0; border-bottom:1px solid var(--border); }
+  section:last-child { border-bottom:none; }
+  .section-label { font-family:'DM Mono',monospace; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ocean); font-weight:500; margin-bottom:10px; }
+  h2 { font-family:'Fraunces',serif; font-size:clamp(24px,4vw,34px); font-weight:700; color:var(--ink); line-height:1.2; margin-bottom:16px; }
+  h3 { font-family:'Fraunces',serif; font-size:19px; font-weight:600; color:var(--deep); margin:32px 0 12px; }
+  p { margin-bottom:14px; }
+  p:last-child { margin-bottom:0; }
+
+  /* SOLUTION BLOCKS */
+  .solution-block { margin:20px 0; border-radius:var(--r); border:2px solid var(--border); overflow:hidden; background:white; }
+  .solution-toggle { width:100%; text-align:left; background:none; border:none; padding:16px 20px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; color:var(--deep); background:linear-gradient(135deg,#EBF8FF,#F0FFF4); transition:background 0.2s; }
+  .solution-toggle:hover { background:linear-gradient(135deg,#BEE3F8,#C6F6D5); }
+  .solution-toggle .arrow { transition:transform 0.3s; font-size:16px; }
+  .solution-toggle.open .arrow { transform:rotate(180deg); }
+  .solution-content { display:none; padding:20px 24px; border-top:1px solid var(--border); }
+  .solution-content.open { display:block; }
+
+  .part-label { display:inline-block; border-radius:6px; padding:2px 10px; font-size:12px; font-weight:700; letter-spacing:0.05em; margin-bottom:12px; font-family:'DM Mono',monospace; color:white; }
+  .pl-a { background:var(--ocean); }
+  .pl-b { background:var(--mint); }
+  .pl-c { background:var(--coral); }
+  .pl-d { background:#9F7AEA; }
+
+  /* PROOF STEPS */
+  .proof-steps { counter-reset:proof; list-style:none; margin:16px 0; }
+  .proof-steps li { counter-increment:proof; display:flex; gap:14px; align-items:flex-start; margin-bottom:12px; padding:14px 16px; background:var(--mist); border-radius:10px; border:1px solid var(--border); }
+  .proof-steps li::before { content:counter(proof); min-width:26px; height:26px; background:var(--ocean); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
+  .proof-steps .sb strong { display:block; font-size:15px; color:var(--ink); margin-bottom:4px; }
+  .proof-steps .sb span { font-size:14px; color:var(--sub); line-height:1.6; }
+
+  /* MATH DERIVATION LAYOUT */
+  .math-block {
+    background: white;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--ocean);
+    border-radius: 0 12px 12px 0;
+    padding: 0;
+    margin: 16px 0;
+    overflow: hidden;
+  }
+  .math-row {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .math-row:last-child { border-bottom: none; }
+  .math-row.section-header {
+    background: var(--mist);
+    grid-template-columns: 1fr;
+  }
+  .math-row.section-header .math-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--sub);
+    padding: 8px 18px; border-right: none; background: none;
+  }
+  .math-label {
+    font-size: 12px; font-weight: 600; color: var(--sub);
+    padding: 12px 16px; background: #FAFBFC;
+    border-right: 1px solid var(--border);
+    display: flex; align-items: center;
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.4;
+  }
+  .math-expr {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px; color: var(--ink);
+    padding: 12px 18px;
+    display: flex; align-items: center; flex-wrap: wrap;
+    line-height: 1.7; gap: 4px;
+  }
+  .math-expr.result {
+    background: linear-gradient(135deg, #EBF8FF, #F0FFF4);
+    font-weight: 700; color: var(--deep);
+  }
+  .math-expr .hi { color: var(--ocean); font-weight: 700; }
+  .math-expr .res { color: #276749; font-weight: 700; }
+  .math-expr .sub-note {
+    font-family: 'DM Sans', sans-serif; font-size: 12px;
+    color: var(--sub); font-style: italic; font-weight: 400;
+    margin-left: 8px;
+  }
+
+  .result-highlight { background:linear-gradient(135deg,var(--deep),var(--ocean)); color:white; border-radius:12px; padding:16px 22px; font-family:'DM Mono',monospace; font-size:15px; margin:16px 0; text-align:center; font-weight:600; }
+
+  /* CALLOUTS */
+  .callout { display:flex; gap:14px; align-items:flex-start; padding:14px 18px; border-radius:12px; margin:16px 0; font-size:14px; }
+  .callout-blue { background:#EBF8FF; border:1px solid #BEE3F8; color:#2C5282; }
+  .callout-yellow { background:#FFFFF0; border:1px solid #FAF089; color:#744210; }
+  .callout-green { background:#F0FFF4; border:1px solid #9AE6B4; color:#276749; }
+  .callout-coral { background:#FFF5F5; border:1px solid #FEB2B2; color:#822727; }
+  .callout-icon { font-size:18px; flex-shrink:0; margin-top:2px; }
+
+  /* LAYOUT ELEMENTS */
+  .insight-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin:20px 0; }
+  .insight-item { background:var(--mist); border-radius:12px; padding:18px; border:1px solid var(--border); }
+  .insight-item .icon { font-size:26px; margin-bottom:8px; }
+  .insight-item strong { display:block; font-size:14px; color:var(--ink); margin-bottom:4px; }
+  .insight-item span { font-size:13px; color:var(--sub); }
+
+  .compare-table { width:100%; border-collapse:collapse; margin:16px 0; border-radius:10px; overflow:hidden; }
+  .compare-table th { background:var(--deep); color:white; padding:12px 16px; text-align:left; font-size:14px; font-weight:600; }
+  .compare-table td { padding:11px 16px; font-size:14px; border-bottom:1px solid var(--border); }
+  .compare-table tr:last-child td { border-bottom:none; }
+  .compare-table tr:nth-child(even) td { background:var(--mist); }
+  .hi-cell { color:var(--ocean); font-weight:600; font-family:'DM Mono',monospace; }
+
+  /* INTERACTIVE TOOLS */
+  .tool-wrapper { background:white; border-radius:20px; border:2px solid var(--border); overflow:hidden; margin:24px 0; box-shadow:0 8px 32px rgba(0,0,0,0.07); }
+  .tool-header { background:linear-gradient(135deg,var(--deep),var(--ocean)); color:white; padding:16px 22px; display:flex; align-items:center; gap:12px; }
+  .tool-icon { width:34px; height:34px; background:rgba(255,255,255,0.15); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .tool-header h4 { font-family:'Fraunces',serif; font-size:15px; font-weight:600; }
+  .tool-header p { font-size:13px; opacity:0.75; margin:0; }
+  .tool-body { padding:22px; }
+  .controls { display:flex; flex-wrap:wrap; gap:14px; margin-bottom:18px; padding:14px; background:var(--mist); border-radius:10px; }
+  .control-group { display:flex; flex-direction:column; gap:5px; flex:1; min-width:130px; }
+  .control-group label { font-size:11px; font-weight:600; color:var(--sub); letter-spacing:0.05em; text-transform:uppercase; }
+  .control-group input[type=range] { width:100%; accent-color:var(--ocean); cursor:pointer; }
+  .control-group .val { font-family:'DM Mono',monospace; font-size:13px; color:var(--ocean); font-weight:500; background:white; border:1px solid var(--border); border-radius:6px; padding:3px 7px; text-align:center; }
+  .btn { background:var(--ocean); color:white; border:none; border-radius:10px; padding:9px 18px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:7px; }
+  .btn:hover { background:var(--deep); transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,119,182,0.3); }
+  .btn.secondary { background:white; color:var(--ocean); border:2px solid var(--ocean); }
+  .btn.secondary:hover { background:var(--sky); }
+  .btn-row { display:flex; flex-wrap:wrap; gap:9px; margin:14px 0; }
+  canvas { border-radius:10px; border:1px solid var(--border); display:block; width:100%; background:white; }
+  .res-box { background:var(--mist); border-radius:8px; padding:12px 16px; margin-top:14px; font-size:14px; border:1px solid var(--border); line-height:1.6; }
+  .res-box strong { color:var(--ocean); }
+
+  .summary-banner { background:linear-gradient(135deg,var(--mint) 0%,var(--ocean) 100%); color:white; border-radius:20px; padding:36px; text-align:center; margin:40px 0 0; }
+  .summary-banner h3 { font-family:'Fraunces',serif; font-size:22px; color:white; margin:0 0 12px; }
+  .summary-banner p { opacity:0.9; margin:0; font-size:15px; line-height:1.8; }
+  footer { text-align:center; padding:28px; background:var(--ink); color:rgba(255,255,255,0.5); font-size:13px; }
+  footer strong { color:rgba(255,255,255,0.85); }
+  hr.soft { border:none; border-top:1px solid var(--border); margin:20px 0; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="week-badge">Week 7 · ECE4076/5176 Computer Vision · S1 2026</div>
+    <h1>Unsupervised<br><em>Learning</em></h1>
+    <p>Discovering structure in data — without labels. Full step-by-step solutions with interactive visualisations.</p>
+    <div class="hero-tags">
+      <span class="tag">K-Means</span><span class="tag">K-Medians</span><span class="tag">ℓ₁ vs ℓ₂</span><span class="tag">Decision Boundary</span><span class="tag">Multivariate Gaussian</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc">
+  <div class="toc-inner">
+    <a href="#background"><span class="num">0</span> Background</a>
+    <a href="#q1"><span class="num">Q1</span> Norm &amp; Mean</a>
+    <a href="#q2"><span class="num">Q2</span> ℓ₁ &amp; Median</a>
+    <a href="#q3"><span class="num">Q3</span> Decision Boundary</a>
+    <a href="#q4"><span class="num">Q4</span> Covariance</a>
+    <a href="#q5"><span class="num">Q5</span> PDF</a>
+    <a href="#q6"><span class="num">Q6</span> Density Values</a>
+  </div>
+</nav>
+
+<div class="container">
+
+<!-- BACKGROUND -->
+<section id="background">
+  <div class="section-label">Background</div>
+  <h2>What is Unsupervised Learning?</h2>
+  <p>In supervised learning, every data point has a label — "this pixel is a road", "this image contains a cat". Unsupervised learning asks a harder question: <strong>what if we have no labels at all?</strong> Can we still discover meaningful structure in the data?</p>
+  <div class="insight-grid">
+    <div class="insight-item"><div class="icon">🎯</div><strong>Clustering</strong><span>Group similar data points together, without knowing the group meanings in advance</span></div>
+    <div class="insight-item"><div class="icon">📐</div><strong>Distance Functions</strong><span>The choice of distance (ℓ₁ vs ℓ₂) changes what "similar" means and who the optimal centre is</span></div>
+    <div class="insight-item"><div class="icon">📊</div><strong>Density Estimation</strong><span>Model the data's probability distribution — Gaussian is the most common choice</span></div>
+    <div class="insight-item"><div class="icon">🔍</div><strong>Vision Applications</strong><span>Image segmentation, background modelling, feature clustering in visual recognition</span></div>
+  </div>
+  <div class="callout callout-blue">
+    <span class="callout-icon">💡</span>
+    <span><strong>Core idea of this problem set:</strong> K-Means finds cluster centres by minimising the total <em>squared Euclidean distance</em> to all assigned points. This problem set proves <em>why</em> the arithmetic mean is the unique optimal centre — and explores what changes when we switch to ℓ₁ distance.</span>
+  </div>
+</section>
+
+<!-- Q1 -->
+<section id="q1">
+  <div class="section-label">Question 1</div>
+  <h2>Gradient of the Norm — Why K-Means Uses the Mean</h2>
+  <p>This question builds the calculus foundation of K-Means from scratch. Four sub-parts chain together: first we express norms as dot products, then compute gradients, then use those gradients to prove that the optimal cluster centre is the arithmetic mean.</p>
+
+  <h3>Part (a) — Show that ‖µ‖² = µᵀµ</h3>
+  <p>This establishes that the squared L2 norm equals the vector dot product with itself — a fact that makes differentiating norms much simpler in the parts that follow.</p>
+  <div class="solution-block">
+    <button class="solution-toggle" onclick="toggleSol(this)"><span>📖 Step-by-Step Solution — Part (a)</span><span class="arrow">▼</span></button>
+    <div class="solution-content">
+      <span class="part-label pl-a">Part (a)</span>
+
+      <!-- SVG: vector dot product visual -->
+      <svg viewBox="0 0 520 110" style="width:100%;max-width:520px;display:block;margin:0 auto 16px;font-family:'DM Sans',sans-serif;">
+        <rect width="520" height="110" rx="10" fill="#EBF8FF"/>
+        <!-- Row vector -->
+        <rect x="20" y="30" width="220" height="36" rx="6" fill="white" stroke="#BEE3F8" stroke-width="1.5"/>
+        <text x="30" y="53" font-size="13" fill="#718096">µᵀ =</text>
+        <text x="80" y="53" font-size="13" fill="#023E8A" font-weight="700">[ µ₁  µ₂  ···  µₙ ]</text>
+        <!-- Column vector -->
+        <rect x="260" y="15" width="60" height="76" rx="6" fill="white" stroke="#BEE3F8" stroke-width="1.5"/>
+        <text x="272" y="35" font-size="12" fill="#023E8A" font-weight="700">µ₁</text>
+        <text x="272" y="53" font-size="12" fill="#023E8A" font-weight="700">µ₂</text>
+        <text x="272" y="69" font-size="12" fill="#023E8A" font-weight="700">⋮</text>
+        <text x="272" y="85" font-size="12" fill="#023E8A" font-weight="700">µₙ</text>
+        <!-- Arrow + equals -->
+        <text x="338" y="55" font-size="22" fill="#0077B6">→</text>
+        <!-- Result -->
+        <rect x="372" y="22" width="130" height="62" rx="6" fill="#F0FFF4" stroke="#9AE6B4" stroke-width="1.5"/>
+        <text x="382" y="44" font-size="12" fill="#276749">µ₁²+µ₂²+···+µₙ²</text>
+        <line x1="382" x2="490" y1="52" y2="52" stroke="#9AE6B4" stroke-width="1"/>
+        <text x="420" y="70" font-size="13" fill="#276749" font-weight="700">= ‖µ‖²</text>
+      </svg>
+
+      <div class="math-block">
+        <div class="math-row section-header"><div class="math-label">Expand µᵀµ</div></div>
+        <div class="math-row">
+          <div class="math-label">Write out product</div>
+          <div class="math-expr">µᵀµ = µ₁·µ₁ + µ₂·µ₂ + ··· + µₙ·µₙ</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Simplify squares</div>
+          <div class="math-expr">= µ₁² + µ₂² + ··· + µₙ²</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Recognise definition</div>
+          <div class="math-expr result"><span class="res">= ‖µ‖²  ✓</span><span class="sub-note">matches the definition of squared L2 norm</span></div>
+        </div>
+      </div>
+      <div class="callout callout-green">
+        <span class="callout-icon">🎓</span>
+        <span><strong>Why this matters:</strong> Writing norms as dot products converts geometry into linear algebra, which has clean differentiation rules we can apply in parts (b) and (c).</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Part (b) — Show that ∂‖µ‖²/∂µ = 2µ</h3>
+  <p>The gradient of a scalar function over a vector is itself a vector — each component is the partial derivative with respect to one element of µ. This is the multivariate analogue of the scalar rule d(x²)/dx = 2x.</p>
+  <div class="solution-block">
+    <button class="solution-toggle" onclick="toggleSol(this)"><span>📖 Step-by-Step Solution — Part (b)</span><span class="arrow">▼</span></button>
+    <div class="solution-content">
+      <span class="part-label pl-b">Part (b)</span>
+
+      <!-- SVG: partial derivative concept -->
+      <svg viewBox="0 0 520 100" style="width:100%;max-width:520px;display:block;margin:0 auto 16px;font-family:'DM Sans',sans-serif;">
+        <rect width="520" height="100" rx="10" fill="#F0FFF4"/>
+        <text x="20" y="28" font-size="12" fill="#276749" font-weight="600">‖µ‖² = µ₁² + µ₂² + µ₃² + ···</text>
+        <!-- arrows showing only one term survives differentiation -->
+        <text x="20" y="55" font-size="11" fill="#718096">∂/∂µⱼ:</text>
+        <rect x="65" y="42" width="28" height="22" rx="4" fill="#9AE6B4"/>
+        <text x="69" y="57" font-size="12" fill="#276749" font-weight="700">0</text>
+        <text x="97" y="57" font-size="13" fill="#718096">+</text>
+        <rect x="110" y="42" width="32" height="22" rx="4" fill="#FFB800"/>
+        <text x="112" y="57" font-size="12" fill="#744210" font-weight="700">2µⱼ</text>
+        <text x="146" y="57" font-size="13" fill="#718096">+</text>
+        <rect x="159" y="42" width="28" height="22" rx="4" fill="#9AE6B4"/>
+        <text x="163" y="57" font-size="12" fill="#276749" font-weight="700">0</text>
+        <text x="192" y="57" font-size="13" fill="#718096">+ ···</text>
+        <text x="240" y="57" font-size="18" fill="#0077B6">→</text>
+        <text x="270" y="57" font-size="13" fill="#744210" font-weight="700">2µⱼ</text>
+        <text x="20" y="85" font-size="11" fill="#718096" font-style="italic">All other terms are constant w.r.t. µⱼ, so their derivatives are 0. Only µⱼ² survives.</text>
+      </svg>
+
+      <div class="math-block">
+        <div class="math-row section-header"><div class="math-label">Differentiate component j</div></div>
+        <div class="math-row">
+          <div class="math-label">Expand from (a)</div>
+          <div class="math-expr">‖µ‖² = µ₁² + ··· + <span class="hi">µⱼ²</span> + ··· + µₙ²</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">∂/∂µⱼ each term</div>
+          <div class="math-expr">= 0 + ··· + <span class="hi">2µⱼ</span> + ··· + 0<span class="sub-note">only µⱼ² depends on µⱼ</span></div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Stack into gradient vector</div></div>
+        <div class="math-row">
+          <div class="math-label">All n components</div>
+          <div class="math-expr">∂‖µ‖²/∂µ = [ 2µ₁, 2µ₂, …, 2µₙ ]ᵀ</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Factor out 2</div>
+          <div class="math-expr result"><span class="res">= 2µ  ✓</span><span class="sub-note">same as scalar rule d(x²)/dx = 2x, applied per component</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Part (c) — Show that ∂‖x−µ‖²/∂µ = −2(x−µ)</h3>
+  <p>This is the critical gradient for K-Means: how does the squared distance between a fixed point x and the centre µ change as we move µ? The negative sign tells us which direction to shift µ to reduce the distance.</p>
+  <div class="solution-block">
+    <button class="solution-toggle" onclick="toggleSol(this)"><span>📖 Step-by-Step Solution — Part (c)</span><span class="arrow">▼</span></button>
+    <div class="solution-content">
+      <span class="part-label pl-c">Part (c)</span>
+
+      <!-- SVG: geometric picture of gradient -->
+      <svg viewBox="0 0 520 120" style="width:100%;max-width:520px;display:block;margin:0 auto 16px;font-family:'DM Sans',sans-serif;">
+        <rect width="520" height="120" rx="10" fill="#FFFFF0"/>
+        <!-- number line -->
+        <line x1="40" x2="480" y1="65" y2="65" stroke="#CBD5E0" stroke-width="2"/>
+        <!-- x point -->
+        <circle cx="340" cy="65" r="8" fill="#52B788"/>
+        <text x="330" y="50" font-size="12" fill="#276749" font-weight="700">x (fixed)</text>
+        <!-- µ point left of x -->
+        <circle cx="160" cy="65" r="8" fill="#0077B6"/>
+        <text x="150" y="90" font-size="12" fill="#0077B6" font-weight="700">µ</text>
+        <!-- distance brace -->
+        <line x1="168" x2="332" y1="65" y2="65" stroke="#FFB800" stroke-width="2.5"/>
+        <text x="220" y="58" font-size="11" fill="#744210" font-weight="600">‖x−µ‖²</text>
+        <!-- gradient arrow: points away from x (positive direction) -->
+        <line x1="160" x2="100" y1="65" y2="65" stroke="#FF6B6B" stroke-width="2.5" marker-end="url(#arr)"/>
+        <defs><marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#FF6B6B"/></marker></defs>
+        <text x="80" y="50" font-size="11" fill="#FF6B6B" font-weight="600">gradient = −2(x−µ)</text>
+        <text x="80" y="107" font-size="11" fill="#718096" font-style="italic">Move µ in the negative gradient direction → µ moves toward x ✓</text>
+        <!-- neg gradient arrow -->
+        <line x1="160" x2="220" y1="105" y2="105" stroke="#52B788" stroke-width="2" marker-end="url(#arr2)"/>
+        <defs><marker id="arr2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#52B788"/></marker></defs>
+        <text x="225" y="109" font-size="11" fill="#52B788">−gradient direction</text>
+      </svg>
+
+      <div class="math-block">
+        <div class="math-row section-header"><div class="math-label">Step 1 — expand the norm</div></div>
+        <div class="math-row">
+          <div class="math-label">Use (a−b)ᵀ(a−b)</div>
+          <div class="math-expr">‖x−µ‖² = xᵀx − <span class="hi">2µᵀx</span> + µᵀµ</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Identify terms</div>
+          <div class="math-expr">= ‖x‖² − 2µᵀx + ‖µ‖²</div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Step 2 — differentiate each term w.r.t. µ</div></div>
+        <div class="math-row">
+          <div class="math-label">∂/∂µ of ‖x‖²</div>
+          <div class="math-expr">= 0<span class="sub-note">x is a fixed constant, does not depend on µ</span></div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">∂/∂µ of 2µᵀx</div>
+          <div class="math-expr">= 2x<span class="sub-note">µᵀx = Σⱼ µⱼxⱼ, so ∂/∂µⱼ = xⱼ → stack into 2x</span></div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">∂/∂µ of ‖µ‖²</div>
+          <div class="math-expr">= 2µ<span class="sub-note">from part (b)</span></div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Step 3 — combine</div></div>
+        <div class="math-row">
+          <div class="math-label">Sum the parts</div>
+          <div class="math-expr">∂‖x−µ‖²/∂µ = 0 − 2x + 2µ = 2µ − 2x</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Factor</div>
+          <div class="math-expr result"><span class="res">= −2(x−µ)  ✓</span></div>
+        </div>
+      </div>
+      <div class="callout callout-yellow">
+        <span class="callout-icon">⚠️</span>
+        <span><strong>Mind the sign:</strong> The gradient −2(x−µ) is negative when µ &lt; x, meaning it points leftward — away from x. Moving µ in the <em>negative</em> gradient direction therefore pulls µ toward x, which is exactly what we want a clustering algorithm to do.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Part (d) — Prove µ* = (1/m) Σᵢ xᵢ (the arithmetic mean)</h3>
+  <p>Using the gradient from part (c), we now prove that the unique minimiser of the total squared distance is the arithmetic mean — the mathematical justification for K-Means' centroid update step.</p>
+  <div class="solution-block">
+    <button class="solution-toggle" onclick="toggleSol(this)"><span>📖 Step-by-Step Solution — Part (d)</span><span class="arrow">▼</span></button>
+    <div class="solution-content">
+      <span class="part-label pl-d">Part (d)</span>
+
+      <!-- SVG: loss function bowl + minimum at mean -->
+      <svg viewBox="0 0 520 130" style="width:100%;max-width:520px;display:block;margin:0 auto 16px;font-family:'DM Sans',sans-serif;">
+        <rect width="520" height="130" rx="10" fill="#F8F0FF"/>
+        <!-- parabola L(µ) -->
+        <polyline points="40,110 80,70 120,44 160,30 200,28 240,38 280,58 320,86 360,110" fill="none" stroke="#9F7AEA" stroke-width="2.5"/>
+        <text x="370" y="108" font-size="12" fill="#9F7AEA" font-weight="600">L(µ) = Σ‖xᵢ−µ‖²</text>
+        <!-- minimum -->
+        <circle cx="200" cy="28" r="5" fill="#FF6B6B"/>
+        <line x1="200" x2="200" y1="28" y2="120" stroke="#FF6B6B" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="170" y="125" font-size="12" fill="#FF6B6B" font-weight="700">µ* = mean</text>
+        <!-- data points on x-axis -->
+        <line x1="40" x2="480" y1="120" y2="120" stroke="#CBD5E0" stroke-width="1"/>
+        <circle cx="100" cy="120" r="4" fill="#0077B6"/><text x="92" y="115" font-size="9" fill="#0077B6">x₁</text>
+        <circle cx="160" cy="120" r="4" fill="#0077B6"/><text x="152" y="115" font-size="9" fill="#0077B6">x₂</text>
+        <circle cx="240" cy="120" r="4" fill="#0077B6"/><text x="232" y="115" font-size="9" fill="#0077B6">x₃</text>
+        <circle cx="300" cy="120" r="4" fill="#0077B6"/><text x="292" y="115" font-size="9" fill="#0077B6">x₄</text>
+        <text x="30" y="18" font-size="11" fill="#718096" font-style="italic">Convex bowl — gradient=0 gives the unique global minimum</text>
+      </svg>
+
+      <div class="math-block">
+        <div class="math-row section-header"><div class="math-label">Differentiate the total loss</div></div>
+        <div class="math-row">
+          <div class="math-label">Total loss</div>
+          <div class="math-expr">∂L/∂µ = ∂/∂µ  Σᵢ ‖xᵢ−µ‖²</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Linearity of ∂</div>
+          <div class="math-expr">= Σᵢ  ∂/∂µ ‖xᵢ−µ‖²<span class="sub-note">derivative of sum = sum of derivatives</span></div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Apply part (c)</div>
+          <div class="math-expr">= Σᵢ  −2(xᵢ−µ)</div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Set gradient = 0 and solve</div></div>
+        <div class="math-row">
+          <div class="math-label">Set to zero</div>
+          <div class="math-expr">Σᵢ −2(xᵢ−µ*) = 0</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Expand sum</div>
+          <div class="math-expr">−2 Σᵢ xᵢ  +  2 Σᵢ µ*  =  0</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">µ* is constant over i</div>
+          <div class="math-expr">Σᵢ xᵢ  =  <span class="hi">m · µ*</span><span class="sub-note">Σᵢ µ* = m·µ* since µ* doesn't change with i</span></div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Divide by m</div>
+          <div class="math-expr result"><span class="res">µ* = (1/m) Σᵢ xᵢ  ✓</span><span class="sub-note">the arithmetic mean!</span></div>
+        </div>
+      </div>
+      <div class="result-highlight">µ* = (x₁ + x₂ + ⋯ + xₘ) / m — the mean is the unique optimal centre under ℓ₂² loss</div>
+      <div class="callout callout-green">
+        <span class="callout-icon">🎓</span>
+        <span><strong>Why this matters for K-Means:</strong> The "update centroid to the average" step isn't a heuristic — it's the exact closed-form minimiser. Each iteration is therefore guaranteed to reduce (or maintain) the total loss.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tool-wrapper">
+    <div class="tool-header"><div class="tool-icon">🔵</div><div><h4>Interactive: K-Means Centroid Explorer</h4><p>Click to add points, then find the optimal µ*</p></div></div>
+    <div class="tool-body">
+      <div class="callout callout-yellow" style="margin-bottom:14px;"><span class="callout-icon">👆</span><span>Click anywhere on the canvas to add data points. Then press <strong>Find Optimal µ*</strong> — the red cross shows the mean, with dashed lines showing each distance contribution.</span></div>
+      <canvas id="kmeans-canvas" height="300"></canvas>
+      <div class="btn-row">
+        <button class="btn" onclick="findMean()">📍 Find Optimal µ* (Mean)</button>
+        <button class="btn secondary" onclick="addRandomPoints()">✨ Random Points</button>
+        <button class="btn secondary" onclick="clearKMeans()">🗑 Clear</button>
+      </div>
+      <div class="res-box" id="kmeans-result">Add at least 2 points to see the result.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Q2 -->
+<section id="q2">
+  <div class="section-label">Question 2</div>
+  <h2>ℓ₁ Distance and K-Medians</h2>
+  <p>What changes when we replace squared Euclidean distance with the Manhattan (ℓ₁) distance? Everything — the geometry of the unit ball, the structure of the derivative, and the identity of the optimal centre all shift fundamentally.</p>
+
+  <h3>Part (a) — Plot the ℓ₁ unit ball in ℝ²</h3>
+  <p>In ℓ₂, all points at distance 1 from the origin form a circle. Under ℓ₁, the same set forms a rotated square (diamond), because the constraint |x₁| + |x₂| = 1 is piecewise-linear — it defines a straight line in each of the four quadrants.</p>
+  <div class="solution-block">
+    <button class="solution-toggle" onclick="toggleSol(this)"><span>📖 Step-by-Step Solution — Part (a)</span><span class="arrow">▼</span></button>
+    <div class="solution-content">
+      <span class="part-label pl-a">Part (a)</span>
+
+      <!-- SVG: ℓ₁ ball quadrant-by-quadrant -->
+      <svg viewBox="0 0 520 200" style="width:100%;max-width:520px;display:block;margin:0 auto 16px;font-family:'DM Sans',sans-serif;">
+        <rect width="520" height="200" rx="10" fill="#EBF8FF"/>
+        <!-- axes -->
+        <line x1="260" x2="260" y1="10" y2="190" stroke="#CBD5E0" stroke-width="1.5"/>
+        <line x1="60" x2="460" y1="100" y2="100" stroke="#CBD5E0" stroke-width="1.5"/>
+        <text x="462" y="104" font-size="11" fill="#718096">x₁</text>
+        <text x="262" y="16" font-size="11" fill="#718096">x₂</text>
+        <!-- diamond -->
+        <polygon points="260,20 380,100 260,180 140,100" fill="rgba(255,184,0,0.12)" stroke="#FFB800" stroke-width="2.5"/>
+        <!-- vertices -->
+        <circle cx="380" cy="100" r="5" fill="#0077B6"/>
+        <text x="385" y="98" font-size="11" fill="#023E8A" font-weight="700">(1,0)</text>
+        <circle cx="140" cy="100" r="5" fill="#0077B6"/>
+        <text x="105" y="98" font-size="11" fill="#023E8A" font-weight="700">(−1,0)</text>
+        <circle cx="260" cy="20" r="5" fill="#0077B6"/>
+        <text x="265" y="18" font-size="11" fill="#023E8A" font-weight="700">(0,1)</text>
+        <circle cx="260" cy="180" r="5" fill="#0077B6"/>
+        <text x="265" y="195" font-size="11" fill="#023E8A" font-weight="700">(0,−1)</text>
+        <!-- quadrant labels -->
+        <text x="300" y="60" font-size="10" fill="#744210">Q I: x₁+x₂=1</text>
+        <text x="148" y="60" font-size="10" fill="#744210">Q II: −x₁+x₂=1</text>
+        <text x="148" y="150" font-size="10" fill="#744210">Q III: −x₁−x₂=1</text>
+        <text x="295" y="150" font-size="10" fill="#744210">Q IV: x₁−x₂=1</text>
+      </svg>
+
+      <div class="math-block">
+        <div class="math-row section-header"><div class="math-label">Analyse each quadrant — remove |·| using the sign in that region</div></div>
+        <div class="math-row">
+          <div class="math-label">Quadrant I (x₁≥0, x₂≥0)</div>
+          <div class="math-expr">x₁ + x₂ = 1 → line from (1,0) to (0,1), slope = −1</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Quadrant II (x₁&lt;0, x₂≥0)</div>
+          <div class="math-expr">−x₁ + x₂ = 1 → line from (−1,0) to (0,1), slope = +1</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Quadrant III (x₁&lt;0, x₂&lt;0)</div>
+          <div class="math-expr">−x₁ − x₂ = 1 → line from (−1,0) to (0,−1), slope = −1</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Quadrant IV (x₁≥0, x₂&lt;0)</div>
+          <div class="math-expr">x₁ − x₂ = 1 → line from (1,0) to (0,−1), slope = +1</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Result</div>
+          <div class="math-expr result"><span class="res">Four line segments → diamond with vertices at (±1,0) and (0,±1)  ✓</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Part (b) — Compute d/dµ |x − µ|</h3>
+  <p>Unlike the smooth quadratic in Q1, the absolute value function has a sharp <em>kink</em> at x = µ. We handle the two smooth regions separately, then note what happens at the kink.</p>
+  <div class="solution-block">
+    <button class="solution-toggle" onclick="toggleSol(this)"><span>📖 Step-by-Step Solution — Part (b)</span><span class="arrow">▼</span></button>
+    <div class="solution-content">
+      <span class="part-label pl-b">Part (b)</span>
+
+      <!-- SVG: |x−µ| V-shape with derivative annotations -->
+      <svg viewBox="0 0 520 150" style="width:100%;max-width:520px;display:block;margin:0 auto 16px;font-family:'DM Sans',sans-serif;">
+        <rect width="520" height="150" rx="10" fill="#FFF5F5"/>
+        <!-- axes -->
+        <line x1="50" x2="470" y1="120" y2="120" stroke="#CBD5E0" stroke-width="1.5"/>
+        <line x1="260" x2="260" y1="10" y2="130" stroke="#CBD5E0" stroke-width="1.5"/>
+        <text x="472" y="124" font-size="11" fill="#718096">µ</text>
+        <!-- V-shape centred at x=260 (µ=x) -->
+        <polyline points="60,110 260,30 460,110" fill="none" stroke="#FF6B6B" stroke-width="2.5"/>
+        <!-- x point (kink) -->
+        <circle cx="260" cy="30" r="5" fill="#FF6B6B"/>
+        <text x="268" y="28" font-size="11" fill="#822727" font-weight="700">x (kink, µ=x)</text>
+        <!-- slope annotations -->
+        <text x="80" y="88" font-size="12" fill="#744210" font-weight="700">slope = −1</text>
+        <text x="80" y="102" font-size="10" fill="#718096">(µ &lt; x, moving µ left makes |x−µ| grow)</text>
+        <text x="320" y="88" font-size="12" fill="#276749" font-weight="700">slope = +1</text>
+        <text x="320" y="102" font-size="10" fill="#718096">(µ &gt; x)</text>
+        <text x="195" y="145" font-size="10" fill="#718096" font-style="italic">Function |x−µ| plotted as a function of µ, with x fixed</text>
+      </svg>
+
+      <div class="math-block">
+        <div class="math-row section-header"><div class="math-label">Case 1: x &gt; µ, so (x−µ) &gt; 0</div></div>
+        <div class="math-row">
+          <div class="math-label">Remove |·|</div>
+          <div class="math-expr">|x−µ| = x−µ</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Differentiate w.r.t. µ</div>
+          <div class="math-expr result">d/dµ (x−µ) = <span class="res">−1</span></div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Case 2: x &lt; µ, so (x−µ) &lt; 0</div></div>
+        <div class="math-row">
+          <div class="math-label">Remove |·|</div>
+          <div class="math-expr">|x−µ| = −(x−µ) = µ−x</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Differentiate w.r.t. µ</div>
+          <div class="math-expr result">d/dµ (µ−x) = <span class="res">+1</span></div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Summary</div></div>
+        <div class="math-row">
+          <div class="math-label">Piecewise result</div>
+          <div class="math-expr"><span class="res">d/dµ |x−µ|</span> = −1 if x&gt;µ,  +1 if x&lt;µ,  undefined at x=µ</div>
+        </div>
+      </div>
+      <div class="callout callout-coral">
+        <span class="callout-icon">⚠️</span>
+        <span><strong>At x = µ:</strong> the function has a sharp corner — the classical derivative does not exist. In optimisation theory we use a <em>subgradient</em> (any value in [−1,+1] is valid here). The minimum sits exactly at this kink, so we don't need the precise value there.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Part (c) — Prove that µ* is the median</h3>
+  <p>By switching from ℓ₂ to ℓ₁ distance, the optimal centre shifts from the mean to the median. The key is that every data point now contributes a <em>vote</em> of exactly ±1, regardless of distance.</p>
+  <div class="solution-block">
+    <button class="solution-toggle" onclick="toggleSol(this)"><span>📖 Step-by-Step Solution — Part (c)</span><span class="arrow">▼</span></button>
+    <div class="solution-content">
+      <span class="part-label pl-c">Part (c)</span>
+
+      <!-- SVG: ±1 voting picture -->
+      <svg viewBox="0 0 520 115" style="width:100%;max-width:520px;display:block;margin:0 auto 16px;font-family:'DM Sans',sans-serif;">
+        <rect width="520" height="115" rx="10" fill="#FFFFF0"/>
+        <!-- number line -->
+        <line x1="40" x2="480" y1="60" y2="60" stroke="#CBD5E0" stroke-width="2"/>
+        <!-- µ* marker -->
+        <line x1="260" x2="260" y1="40" y2="80" stroke="#FFB800" stroke-width="2.5"/>
+        <text x="248" y="35" font-size="11" fill="#744210" font-weight="700">µ*</text>
+        <!-- points to the left: push +1 -->
+        <circle cx="100" cy="60" r="7" fill="#52B788"/>
+        <circle cx="150" cy="60" r="7" fill="#52B788"/>
+        <circle cx="200" cy="60" r="7" fill="#52B788"/>
+        <line x1="100" x2="130" y1="75" y2="75" stroke="#52B788" stroke-width="2" marker-end="url(#g)"/>
+        <line x1="150" x2="180" y1="75" y2="75" stroke="#52B788" stroke-width="2" marker-end="url(#g)"/>
+        <line x1="200" x2="230" y1="75" y2="75" stroke="#52B788" stroke-width="2" marker-end="url(#g)"/>
+        <text x="85" y="100" font-size="10" fill="#276749">each votes +1 →</text>
+        <!-- points to the right: push -1 -->
+        <circle cx="320" cy="60" r="7" fill="#FF6B6B"/>
+        <circle cx="370" cy="60" r="7" fill="#FF6B6B"/>
+        <circle cx="420" cy="60" r="7" fill="#FF6B6B"/>
+        <line x1="320" x2="290" y1="75" y2="75" stroke="#FF6B6B" stroke-width="2" marker-end="url(#r)"/>
+        <line x1="370" x2="340" y1="75" y2="75" stroke="#FF6B6B" stroke-width="2" marker-end="url(#r)"/>
+        <line x1="420" x2="390" y1="75" y2="75" stroke="#FF6B6B" stroke-width="2" marker-end="url(#r)"/>
+        <text x="330" y="100" font-size="10" fill="#822727">← each votes −1</text>
+        <defs>
+          <marker id="g" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#52B788"/></marker>
+          <marker id="r" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#FF6B6B"/></marker>
+        </defs>
+        <text x="155" y="18" font-size="11" fill="#744210" font-style="italic">Balance achieved when 3 votes each side → µ* = median</text>
+      </svg>
+
+      <div class="math-block">
+        <div class="math-row section-header"><div class="math-label">Differentiate total ℓ₁ loss</div></div>
+        <div class="math-row">
+          <div class="math-label">Total loss</div>
+          <div class="math-expr">L(µ) = Σᵢ |xᵢ−µ|</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Apply part (b)</div>
+          <div class="math-expr">dL/dµ = Σᵢ { −1 if xᵢ&gt;µ,  +1 if xᵢ&lt;µ }</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Let A = #(xᵢ above µ), B = #(xᵢ below µ)</div>
+          <div class="math-expr">dL/dµ = <span class="hi">−A + B</span></div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Set to zero and interpret</div></div>
+        <div class="math-row">
+          <div class="math-label">Set gradient = 0</div>
+          <div class="math-expr">−A + B = 0  ⟹  <span class="hi">A = B</span></div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Interpretation</div>
+          <div class="math-expr result"><span class="res">µ* = median  ✓</span><span class="sub-note">equal number of points above and below µ* — that's the definition of median</span></div>
+        </div>
+      </div>
+      <div class="result-highlight">µ* = median — exactly half the data lies above, half below</div>
+      <div class="callout callout-green">
+        <span class="callout-icon">🎓</span>
+        <span><strong>The key contrast with Q1:</strong> In ℓ₂, the derivative −2(xᵢ−µ) grows linearly with distance, so a far outlier exerts a massive pull. In ℓ₁, every point contributes exactly ±1, so an outlier at distance 1000 has precisely the same pull as a neighbour at distance 1.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Part (d) — When to prefer K-Medians over K-Means?</h3>
+  <div class="solution-block">
+    <button class="solution-toggle" onclick="toggleSol(this)"><span>📖 Solution — Part (d)</span><span class="arrow">▼</span></button>
+    <div class="solution-content">
+      <span class="part-label pl-d">Part (d)</span>
+      <p>K-Medians is preferred when the data is expected to contain <strong>outliers</strong>. In K-Means, a single point far from the cluster can dramatically pull the centroid away from the true cluster centre (squared distance amplifies the contribution of distant points). In K-Medians, every point contributes exactly ±1 regardless of distance, so extreme values cannot distort the result.</p>
+      <div class="callout callout-green">
+        <span class="callout-icon">✅</span>
+        <span><strong>Use K-Medians when:</strong> data has sensor noise, mislabelled samples, or spatial outliers (common in computer vision). <strong>Use K-Means when:</strong> data is clean and you want the simpler algorithm — mean is O(n), median is O(n log n) per iteration.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tool-wrapper">
+    <div class="tool-header"><div class="tool-icon">💎</div><div><h4>Interactive: ℓₚ Ball Visualiser</h4><p>Slide p from 1 (diamond) through 2 (circle) to ∞ (square)</p></div></div>
+    <div class="tool-body">
+      <div class="controls">
+        <div class="control-group"><label>Norm (p)</label><input type="range" id="norm-p" min="0.5" max="8" step="0.1" value="2" oninput="updateNormVis()"><div class="val" id="norm-p-val">p=2.0</div></div>
+        <div class="control-group"><label>Radius r</label><input type="range" id="norm-r" min="0.5" max="2.5" step="0.1" value="1" oninput="updateNormVis()"><div class="val" id="norm-r-val">r=1.0</div></div>
+      </div>
+      <canvas id="norm-canvas" height="310"></canvas>
+      <div class="res-box" id="norm-description"></div>
+    </div>
+  </div>
+
+  <div class="tool-wrapper">
+    <div class="tool-header"><div class="tool-icon">⚖️</div><div><h4>Interactive: Outlier Robustness — Mean vs Median</h4><p>Drag the outlier to watch how each statistic responds</p></div></div>
+    <div class="tool-body">
+      <div class="controls">
+        <div class="control-group"><label>Outlier Position</label><input type="range" id="outlier-pos" min="5" max="50" step="0.5" value="5" oninput="updateOutlierDemo()"><div class="val" id="outlier-val">x=5.0</div></div>
+      </div>
+      <canvas id="outlier-canvas" height="190"></canvas>
+      <div class="res-box" id="outlier-result"></div>
+    </div>
+  </div>
+
+  <table class="compare-table">
+    <tr><th>Property</th><th>K-Means (ℓ₂)</th><th>K-Medians (ℓ₁)</th></tr>
+    <tr><td>Optimal centre</td><td class="hi-cell">Arithmetic mean</td><td class="hi-cell">Median</td></tr>
+    <tr><td>Derivative of per-point loss</td><td>−2(xᵢ−µ) — grows with distance</td><td>±1 — constant regardless of distance</td></tr>
+    <tr><td>Outlier sensitivity</td><td>❌ Strongly affected</td><td>✅ Robust (each point = ±1 vote)</td></tr>
+    <tr><td>Unit ball shape</td><td>Circle</td><td>Diamond</td></tr>
+    <tr><td>Centre update cost</td><td>O(n) — compute mean</td><td>O(n log n) — compute median</td></tr>
+  </table>
+</section>
+
+<!-- Q3 -->
+<section id="q3">
+  <div class="section-label">Question 3</div>
+  <h2>The K-Means Decision Boundary</h2>
+  <p>Given cluster centres µ₁ = (−1, 2)ᵀ and µ₂ = (2, 3)ᵀ, any new point in ℝ² is assigned to whichever centre is closer. The <strong>decision boundary</strong> is the set of all points exactly equidistant from both — geometrically the perpendicular bisector of the segment joining µ₁ and µ₂.</p>
+
+  <div class="solution-block">
+    <button class="solution-toggle" onclick="toggleSol(this)"><span>📖 Step-by-Step Solution</span><span class="arrow">▼</span></button>
+    <div class="solution-content">
+      <span class="part-label pl-a">Full Solution</span>
+
+      <!-- SVG: geometric picture of perpendicular bisector -->
+      <svg viewBox="0 0 520 200" style="width:100%;max-width:520px;display:block;margin:0 auto 16px;font-family:'DM Sans',sans-serif;">
+        <rect width="520" height="200" rx="10" fill="#EBF8FF"/>
+        <!-- axes -->
+        <line x1="40" x2="480" y1="175" y2="175" stroke="#CBD5E0" stroke-width="1"/>
+        <line x1="40" x2="480" y1="10" y2="175" stroke="none"/>
+        <text x="482" y="179" font-size="10" fill="#718096">x</text>
+        <!-- µ1 point -->
+        <circle cx="120" cy="120" r="10" fill="#0077B6"/>
+        <text x="92" y="115" font-size="12" fill="#023E8A" font-weight="700">µ₁=(−1,2)</text>
+        <!-- µ2 point -->
+        <circle cx="340" cy="80" r="10" fill="#FF6B6B"/>
+        <text x="348" y="76" font-size="12" fill="#822727" font-weight="700">µ₂=(2,3)</text>
+        <!-- segment between them -->
+        <line x1="120" x2="340" y1="120" y2="80" stroke="#FFB800" stroke-width="1.5" stroke-dasharray="5,4"/>
+        <!-- midpoint -->
+        <circle cx="230" cy="100" r="5" fill="#FFB800"/>
+        <text x="235" y="96" font-size="10" fill="#744210">midpoint (0.5, 2.5)</text>
+        <!-- boundary line: 3x+y=4 → at x=-1,y=7; x=2,y=-2  ... scale to canvas -->
+        <!-- map: x in [-3,4] → [40,480], y in [-1,5] → [175,10] -->
+        <!-- x=-2 → 40+5/7*440=355? Let me just draw the perp bisector conceptually -->
+        <line x1="40" x2="460" y1="158" y2="30" stroke="#9F7AEA" stroke-width="2.5" stroke-dasharray="6,4"/>
+        <text x="345" y="20" font-size="11" fill="#9F7AEA" font-weight="700">3x + y − 4 = 0</text>
+        <!-- perpendicular marker -->
+        <rect x="222" y="92" width="12" height="12" fill="none" stroke="#FFB800" stroke-width="1.5" transform="rotate(-10,228,98)"/>
+        <!-- region labels -->
+        <text x="55" y="50" font-size="11" fill="#0077B6">← closer to µ₁</text>
+        <text x="370" y="160" font-size="11" fill="#FF6B6B">closer to µ₂ →</text>
+      </svg>
+
+      <div class="math-block">
+        <div class="math-row section-header"><div class="math-label">Set d²(p,µ₁) = d²(p,µ₂) with µ₁=(−1,2), µ₂=(2,3)</div></div>
+        <div class="math-row">
+          <div class="math-label">Expand left side</div>
+          <div class="math-expr">(x+1)² + (y−2)² = x²+<span class="hi">2x</span>+1 + y²−<span class="hi">4y</span>+4</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Expand right side</div>
+          <div class="math-expr">(x−2)² + (y−3)² = x²−<span class="hi">4x</span>+4 + y²−<span class="hi">6y</span>+9</div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Cancel x² and y² from both sides, collect terms</div></div>
+        <div class="math-row">
+          <div class="math-label">After cancelling</div>
+          <div class="math-expr">2x+1−4y+4 = −4x+4−6y+9</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Move all to left</div>
+          <div class="math-expr">2x+4x − 4y+6y + 1+4−4−9 = 0</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Simplify</div>
+          <div class="math-expr">6x + 2y − 8 = 0</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Divide by 2</div>
+          <div class="math-expr result"><span class="res">3x + y − 4 = 0  ✓</span><span class="sub-note">equivalently y = −3x + 4 (slope −3, y-intercept 4)</span></div>
+        </div>
+      </div>
+      <div class="result-highlight">Decision boundary: 3x + y − 4 = 0</div>
+      <div class="callout callout-blue">
+        <span class="callout-icon">📐</span>
+        <span><strong>Sanity check with midpoint:</strong> The midpoint of µ₁ and µ₂ is (0.5, 2.5). Substituting: 3(0.5) + 2.5 − 4 = 0 ✓ The midpoint always sits exactly on the boundary, confirming the result.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tool-wrapper">
+    <div class="tool-header"><div class="tool-icon">📏</div><div><h4>Interactive: Decision Boundary Explorer</h4><p>Drag µ₁ (blue) or µ₂ (red) — the boundary updates live</p></div></div>
+    <div class="tool-body">
+      <div class="callout callout-yellow" style="margin-bottom:14px;"><span class="callout-icon">✋</span><span>Drag either cluster centre. The Voronoi regions colour the assignment of each point in the plane, and the boundary equation is recalculated in real time.</span></div>
+      <canvas id="boundary-canvas" height="370"></canvas>
+      <div class="res-box" id="boundary-result"></div>
+    </div>
+  </div>
+
+  <div class="callout callout-blue">
+    <span class="callout-icon">📐</span>
+    <span><strong>Higher dimensions:</strong> In ℝⁿ, the decision boundary between two K-Means clusters is a <em>hyperplane</em> (n−1 dimensional), but the derivation is identical — it's still the perpendicular bisector of the segment joining the two centres. For K clusters, all boundaries together form a <strong>Voronoi diagram</strong>.</span>
+  </div>
+</section>
+
+<!-- Q4 -->
+<section id="q4">
+  <div class="section-label">Question 4</div>
+  <h2>Computing the Mean Vector and Covariance Matrix</h2>
+  <p>Given four data points x₁=(10,9)ᵀ, x₂=(10,11)ᵀ, x₃=(8,9)ᵀ, x₄=(12,11)ᵀ, we fit a 2D Gaussian by computing its two parameters: the mean vector µ (where the distribution is centred) and the covariance matrix Σ (how the data spreads and how the two dimensions are correlated).</p>
+
+  <div class="solution-block">
+    <button class="solution-toggle" onclick="toggleSol(this)"><span>📖 Step-by-Step Solution</span><span class="arrow">▼</span></button>
+    <div class="solution-content">
+      <span class="part-label pl-a">Full Solution</span>
+
+      <!-- SVG: scatter plot of the 4 points with mean and deviation arrows -->
+      <svg viewBox="0 0 520 190" style="width:100%;max-width:520px;display:block;margin:0 auto 16px;font-family:'DM Sans',sans-serif;">
+        <rect width="520" height="190" rx="10" fill="#F0FFF4"/>
+        <!-- grid lines -->
+        <line x1="80" x2="440" y1="40" y2="40" stroke="#C6F6D5" stroke-width="1"/>
+        <line x1="80" x2="440" y1="100" y2="100" stroke="#C6F6D5" stroke-width="1"/>
+        <line x1="80" x2="440" y1="160" y2="160" stroke="#C6F6D5" stroke-width="1"/>
+        <line x1="80" x2="80" y1="40" y2="160" stroke="#C6F6D5" stroke-width="1"/>
+        <line x1="200" x2="200" y1="40" y2="160" stroke="#C6F6D5" stroke-width="1"/>
+        <line x1="320" x2="320" y1="40" y2="160" stroke="#C6F6D5" stroke-width="1"/>
+        <line x1="440" x2="440" y1="40" y2="160" stroke="#C6F6D5" stroke-width="1"/>
+        <!-- axis labels -->
+        <text x="72" y="164" font-size="9" fill="#718096" text-anchor="middle">8</text>
+        <text x="192" y="164" font-size="9" fill="#718096" text-anchor="middle">10</text>
+        <text x="312" y="164" font-size="9" fill="#718096" text-anchor="middle">12</text>
+        <text x="67" y="104" font-size="9" fill="#718096" text-anchor="end">10</text>
+        <text x="67" y="44" font-size="9" fill="#718096" text-anchor="end">11</text>
+        <text x="67" y="164" font-size="9" fill="#718096" text-anchor="end">9</text>
+        <!-- mean cross -->
+        <line x1="185" x2="215" y1="100" y2="100" stroke="#FF6B6B" stroke-width="2.5"/>
+        <line x1="200" x2="200" y1="85" y2="115" stroke="#FF6B6B" stroke-width="2.5"/>
+        <text x="210" y="80" font-size="11" fill="#FF6B6B" font-weight="700">µ=(10,10)</text>
+        <!-- data points & deviation arrows -->
+        <!-- x1=(10,9): deviation (0,−1) -->
+        <circle cx="200" cy="160" r="8" fill="#0077B6"/>
+        <text x="207" y="178" font-size="10" fill="#023E8A">x₁(10,9)</text>
+        <line x1="200" x2="200" y1="155" y2="115" stroke="#0077B6" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#bl)"/>
+        <text x="208" y="140" font-size="9" fill="#0077B6">Δy=−1</text>
+        <!-- x2=(10,11): deviation (0,+1) -->
+        <circle cx="200" cy="40" r="8" fill="#0077B6"/>
+        <text x="207" y="38" font-size="10" fill="#023E8A">x₂(10,11)</text>
+        <line x1="200" x2="200" y1="45" y2="87" stroke="#0077B6" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#bl)"/>
+        <text x="208" y="65" font-size="9" fill="#0077B6">Δy=+1</text>
+        <!-- x3=(8,9): deviation (−2,−1) -->
+        <circle cx="80" cy="160" r="8" fill="#52B788"/>
+        <text x="30" y="178" font-size="10" fill="#276749">x₃(8,9)</text>
+        <line x1="85" x2="193" y1="155" y2="108" stroke="#52B788" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#gr)"/>
+        <text x="110" y="125" font-size="9" fill="#276749">Δx=−2,Δy=−1</text>
+        <!-- x4=(12,11): deviation (+2,+1) -->
+        <circle cx="320" cy="40" r="8" fill="#52B788"/>
+        <text x="325" y="38" font-size="10" fill="#276749">x₄(12,11)</text>
+        <line x1="315" x2="208" y1="45" y2="93" stroke="#52B788" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#gr)"/>
+        <text x="248" y="58" font-size="9" fill="#276749">Δx=+2,Δy=+1</text>
+        <defs>
+          <marker id="bl" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#0077B6"/></marker>
+          <marker id="gr" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,6 2.5,0 5" fill="#52B788"/></marker>
+        </defs>
+      </svg>
+
+      <div class="math-block">
+        <div class="math-row section-header"><div class="math-label">Step 1 — Mean vector µ = (1/4) Σ xᵢ</div></div>
+        <div class="math-row">
+          <div class="math-label">x-component</div>
+          <div class="math-expr">µ_x = (10+10+8+12)/4 = 40/4 = <span class="res">10</span></div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">y-component</div>
+          <div class="math-expr">µ_y = (9+11+9+11)/4 = 40/4 = <span class="res">10</span></div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Mean vector</div>
+          <div class="math-expr result"><span class="hi">µ = (10, 10)ᵀ</span></div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Step 2 — Variance of x:  σ²_x = (1/4) Σ (xᵢ−µ_x)²</div></div>
+        <div class="math-row">
+          <div class="math-label">Squared deviations</div>
+          <div class="math-expr">(10−10)²+(10−10)²+(8−10)²+(12−10)² = 0+0+4+4 = 8</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Divide by 4</div>
+          <div class="math-expr result">σ²_x = 8/4 = <span class="res">2</span></div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Step 3 — Variance of y:  σ²_y = (1/4) Σ (yᵢ−µ_y)²</div></div>
+        <div class="math-row">
+          <div class="math-label">Squared deviations</div>
+          <div class="math-expr">(9−10)²+(11−10)²+(9−10)²+(11−10)² = 1+1+1+1 = 4</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Divide by 4</div>
+          <div class="math-expr result">σ²_y = 4/4 = <span class="res">1</span></div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Step 4 — Covariance:  σ_xy = (1/4) Σ (xᵢ−µ_x)(yᵢ−µ_y)</div></div>
+        <div class="math-row">
+          <div class="math-label">Products of deviations</div>
+          <div class="math-expr">(0)(−1) + (0)(+1) + (−2)(−1) + (2)(+1) = 0+0+2+2 = 4</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Divide by 4</div>
+          <div class="math-expr result">σ_xy = 4/4 = <span class="res">1</span></div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Step 5 — Assemble Σ</div></div>
+        <div class="math-row">
+          <div class="math-label">Covariance matrix</div>
+          <div class="math-expr result">Σ = <span class="res">[ 2  1 ]</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="res">[ 1  1 ]</span></div>
+        </div>
+      </div>
+      <div class="callout callout-green">
+        <span class="callout-icon">🔑</span>
+        <span><strong>Interpreting σ_xy = +1:</strong> Positive covariance means x and y increase together. When x is above average (x=12), y is also above average (y=11); when x is below (x=8), y is also below (y=9). This positive co-movement tilts the fitted Gaussian's ellipse toward the upper-right diagonal.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tool-wrapper">
+    <div class="tool-header"><div class="tool-icon">🧮</div><div><h4>Interactive: Covariance Calculator</h4><p>Edit any data point to see mean and covariance update live</p></div></div>
+    <div class="tool-body">
+      <div id="point-inputs" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px;"></div>
+      <canvas id="cov-canvas" height="280"></canvas>
+      <div class="res-box" id="cov-result"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Q5 -->
+<section id="q5">
+  <div class="section-label">Question 5</div>
+  <h2>Writing Down the Multivariate Gaussian PDF</h2>
+  <p>With µ and Σ computed, we can write the full probability density function. The PDF tells us the relative likelihood of observing any point (x,y) — higher density means the point is more "typical" under the fitted distribution.</p>
+
+  <div class="solution-block">
+    <button class="solution-toggle" onclick="toggleSol(this)"><span>📖 Step-by-Step Solution</span><span class="arrow">▼</span></button>
+    <div class="solution-content">
+      <span class="part-label pl-a">Full Solution</span>
+
+      <!-- SVG: 2x2 matrix inverse visual -->
+      <svg viewBox="0 0 520 140" style="width:100%;max-width:520px;display:block;margin:0 auto 16px;font-family:'DM Sans',sans-serif;">
+        <rect width="520" height="140" rx="10" fill="#EBF8FF"/>
+        <text x="20" y="22" font-size="12" fill="#2C5282" font-weight="600">Recipe for 2×2 inverse:</text>
+        <!-- original matrix -->
+        <rect x="20" y="32" width="70" height="55" rx="6" fill="white" stroke="#BEE3F8" stroke-width="1.5"/>
+        <text x="32" y="56" font-size="14" fill="#023E8A" font-weight="700">a  b</text>
+        <text x="32" y="78" font-size="14" fill="#023E8A" font-weight="700">c  d</text>
+        <text x="98" y="64" font-size="18" fill="#0077B6">→</text>
+        <!-- step 1: swap diagonal -->
+        <rect x="125" y="32" width="90" height="55" rx="6" fill="#FFFFF0" stroke="#FAF089" stroke-width="1.5"/>
+        <text x="130" y="26" font-size="10" fill="#744210">① swap diag</text>
+        <text x="137" y="56" font-size="14" fill="#023E8A" font-weight="700"><tspan fill="#52B788">d</tspan>  b</text>
+        <text x="137" y="78" font-size="14" fill="#023E8A" font-weight="700">c  <tspan fill="#52B788">a</tspan></text>
+        <text x="223" y="64" font-size="18" fill="#0077B6">→</text>
+        <!-- step 2: negate off-diag -->
+        <rect x="250" y="32" width="90" height="55" rx="6" fill="#FFF5F5" stroke="#FEB2B2" stroke-width="1.5"/>
+        <text x="252" y="26" font-size="10" fill="#822727">② negate off-diag</text>
+        <text x="262" y="56" font-size="14" fill="#023E8A" font-weight="700">d  <tspan fill="#FF6B6B">−b</tspan></text>
+        <text x="262" y="78" font-size="14" fill="#023E8A" font-weight="700"><tspan fill="#FF6B6B">−c</tspan>  a</text>
+        <text x="348" y="64" font-size="18" fill="#0077B6">÷</text>
+        <!-- step 3: divide by det -->
+        <rect x="370" y="32" width="80" height="55" rx="6" fill="#F0FFF4" stroke="#9AE6B4" stroke-width="1.5"/>
+        <text x="375" y="26" font-size="10" fill="#276749">③ ÷ det(ad−bc)</text>
+        <text x="378" y="56" font-size="14" fill="#276749" font-weight="700">d/det  −b/det</text>
+        <text x="378" y="78" font-size="14" fill="#276749" font-weight="700">−c/det  a/det</text>
+        <!-- our specific values -->
+        <text x="20" y="120" font-size="12" fill="#2C5282">Our Σ=[2,1;1,1]: det=(2)(1)−(1)(1)=1 → Σ⁻¹ = [1,−1;−1,2] (divide by 1, so no change)</text>
+      </svg>
+
+      <div class="math-block">
+        <div class="math-row section-header"><div class="math-label">Step 1 — Compute det(Σ)</div></div>
+        <div class="math-row">
+          <div class="math-label">For Σ=[2,1;1,1]</div>
+          <div class="math-expr">|Σ| = (2)(1) − (1)(1) = 2 − 1 = <span class="res">1</span></div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Step 2 — Compute Σ⁻¹ = (1/det) · [d,−b;−c,a]</div></div>
+        <div class="math-row">
+          <div class="math-label">Swap diagonal, negate off-diag, ÷ by det=1</div>
+          <div class="math-expr">Σ⁻¹ = <span class="res">[ 1  −1 ]</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="res">[ −1  2 ]</span></div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Step 3 — Normalisation constant (N=2, |Σ|=1)</div></div>
+        <div class="math-row">
+          <div class="math-label">Plug in N=2, |Σ|=1</div>
+          <div class="math-expr">1/((2π)^(2/2) · 1^(1/2)) = <span class="hi">1/(2π)</span></div>
+        </div>
+        <div class="math-row section-header"><div class="math-label">Step 4 — Write the full PDF</div></div>
+        <div class="math-row">
+          <div class="math-label">Final result</div>
+          <div class="math-expr result">P(x,y) = <span class="res">(1/2π) · exp(−½ · [x−10, y−10] · [1,−1;−1,2] · [x−10, y−10]ᵀ)</span></div>
+        </div>
+      </div>
+      <div class="result-highlight">P(x,y) = (1/2π) · exp(−½ · [x−10, y−10] · [1,−1;−1,2] · [x−10, y−10]ᵀ)</div>
+      <div class="callout callout-blue">
+        <span class="callout-icon">💡</span>
+        <span>The term (x−µ)ᵀ Σ⁻¹ (x−µ) inside the exponential is the <strong>Mahalanobis distance squared</strong> — the "normalised" distance from point (x,y) to the mean that accounts for the shape and orientation of the distribution. Points at the same Mahalanobis distance form an ellipse, which are the probability contour lines.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tool-wrapper">
+    <div class="tool-header"><div class="tool-icon">📈</div><div><h4>Interactive: 2D Gaussian PDF Visualiser</h4><p>Adjust σ²_x, σ²_y, σ_xy to reshape the distribution</p></div></div>
+    <div class="tool-body">
+      <div class="controls">
+        <div class="control-group"><label>σ²_x (x variance)</label><input type="range" id="g-sx" min="0.5" max="5" step="0.1" value="2" oninput="updateGaussian()"><div class="val" id="g-sx-val">2.0</div></div>
+        <div class="control-group"><label>σ²_y (y variance)</label><input type="range" id="g-sy" min="0.5" max="5" step="0.1" value="1" oninput="updateGaussian()"><div class="val" id="g-sy-val">1.0</div></div>
+        <div class="control-group"><label>σ_xy (covariance)</label><input type="range" id="g-sxy" min="-1.8" max="1.8" step="0.05" value="1" oninput="updateGaussian()"><div class="val" id="g-sxy-val">1.0</div></div>
+      </div>
+      <canvas id="gaussian-canvas" height="310"></canvas>
+      <div class="res-box" id="gaussian-result"></div>
+      <div class="callout callout-blue" style="margin-top:14px;"><span class="callout-icon">👁</span><span>The white ellipse contours show regions of equal probability density. A positive σ_xy tilts the ellipse toward upper-right (↗); negative tilts upper-left (↖); zero gives axis-aligned ellipses.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Q6 -->
+<section id="q6">
+  <div class="section-label">Question 6</div>
+  <h2>Evaluating the PDF at the Four Original Data Points</h2>
+  <p>We now substitute each of the four data points into the PDF derived in Q5. A remarkable symmetry emerges: because all four points are symmetric around the mean (10,10), they all have the same Mahalanobis distance, and therefore the same probability density.</p>
+
+  <div class="solution-block">
+    <button class="solution-toggle" onclick="toggleSol(this)"><span>📖 Step-by-Step Solution — P(10,9) worked in full</span><span class="arrow">▼</span></button>
+    <div class="solution-content">
+      <span class="part-label pl-a">Full Solution</span>
+
+      <!-- SVG: matrix-vector multiplication visual for Mahalanobis -->
+      <svg viewBox="0 0 520 155" style="width:100%;max-width:520px;display:block;margin:0 auto 16px;font-family:'DM Sans',sans-serif;">
+        <rect width="520" height="155" rx="10" fill="#FFFFF0"/>
+        <text x="16" y="20" font-size="11" fill="#744210" font-weight="600">Computing Mahalanobis distance² for x₁=(10,9), µ=(10,10):</text>
+        <!-- step 1: deviation -->
+        <rect x="16" y="32" width="100" height="50" rx="6" fill="white" stroke="#FAF089" stroke-width="1.5"/>
+        <text x="22" y="50" font-size="11" fill="#718096">v−µ =</text>
+        <text x="22" y="70" font-size="13" fill="#023E8A" font-weight="700">[ 0, −1 ]ᵀ</text>
+        <!-- multiply by sigma-inv -->
+        <text x="122" y="60" font-size="18" fill="#0077B6">×</text>
+        <rect x="140" y="32" width="105" height="50" rx="6" fill="white" stroke="#BEE3F8" stroke-width="1.5"/>
+        <text x="146" y="50" font-size="11" fill="#718096">Σ⁻¹ =</text>
+        <text x="146" y="70" font-size="13" fill="#023E8A" font-weight="700">[ 1  −1 ]</text>
+        <text x="146" y="88" font-size="13" fill="#023E8A" font-weight="700">[ −1  2 ]</text>
+        <!-- equals -->
+        <text x="252" y="60" font-size="18" fill="#0077B6">=</text>
+        <rect x="270" y="32" width="90" height="50" rx="6" fill="#FFF5F5" stroke="#FEB2B2" stroke-width="1.5"/>
+        <text x="276" y="50" font-size="11" fill="#718096">result =</text>
+        <text x="276" y="70" font-size="13" fill="#822727" font-weight="700">[ 1, −2 ]ᵀ</text>
+        <!-- dot product -->
+        <text x="366" y="60" font-size="14" fill="#718096">then dot</text>
+        <text x="366" y="75" font-size="14" fill="#718096">with [0,−1]:</text>
+        <rect x="440" y="32" width="68" height="50" rx="6" fill="#F0FFF4" stroke="#9AE6B4" stroke-width="1.5"/>
+        <text x="446" y="52" font-size="11" fill="#718096">Mahal²</text>
+        <text x="452" y="73" font-size="18" fill="#276749" font-weight="700">= 2</text>
+        <!-- bottom working -->
+        <text x="16" y="108" font-size="11" fill="#744210">Σ⁻¹(v−µ) = [1·0+(−1)·(−1),  (−1)·0+2·(−1)]ᵀ = [1, −2]ᵀ</text>
+        <text x="16" y="128" font-size="11" fill="#744210">(v−µ)ᵀ Σ⁻¹ (v−µ) = [0,−1]·[1,−2]ᵀ = 0·1 + (−1)(−2) = 2</text>
+        <text x="16" y="148" font-size="11" fill="#276749" font-weight="600">P(10,9) = (1/2π)·exp(−½·2) = (1/2π)·e⁻¹ ≈ 0.0585</text>
+      </svg>
+
+      <div class="math-block">
+        <div class="math-row section-header"><div class="math-label">Evaluate P(10,9) — compute deviation, Mahalanobis², then PDF</div></div>
+        <div class="math-row">
+          <div class="math-label">Step 1 — Deviation from mean</div>
+          <div class="math-expr">v − µ = (10−10, 9−10)ᵀ = <span class="hi">(0, −1)ᵀ</span></div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Step 2 — Apply Σ⁻¹</div>
+          <div class="math-expr">Σ⁻¹(v−µ) = [1·0+(−1)(−1), (−1)·0+2·(−1)]ᵀ = (1, −2)ᵀ</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Step 3 — Mahalanobis²</div>
+          <div class="math-expr">[0,−1]·(1,−2)ᵀ = (0)(1)+(−1)(−2) = <span class="hi">2</span></div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Step 4 — Exponential</div>
+          <div class="math-expr">exp(−½·2) = e⁻¹ ≈ 0.3679</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Step 5 — Full PDF</div>
+          <div class="math-expr result">P(10,9) = (1/2π)·e⁻¹ ≈ <span class="res">0.0585</span></div>
+        </div>
+      </div>
+
+      <hr class="soft">
+      <p>All four points have the same Mahalanobis distance — here's why:</p>
+
+      <!-- SVG: symmetry of 4 points around mean -->
+      <svg viewBox="0 0 520 160" style="width:100%;max-width:520px;display:block;margin:0 auto 16px;font-family:'DM Sans',sans-serif;">
+        <rect width="520" height="160" rx="10" fill="#EBF8FF"/>
+        <!-- tilted ellipse -->
+        <ellipse cx="260" cy="80" rx="120" ry="65" fill="rgba(0,119,182,0.06)" stroke="#0077B6" stroke-width="2" stroke-dasharray="6,4" transform="rotate(-30,260,80)"/>
+        <text x="300" y="25" font-size="11" fill="#0077B6" font-style="italic">same contour = same P</text>
+        <!-- mean -->
+        <circle cx="260" cy="80" r="5" fill="#FF6B6B"/>
+        <text x="268" y="78" font-size="11" fill="#FF6B6B" font-weight="700">µ=(10,10)</text>
+        <!-- 4 data points on ellipse -->
+        <circle cx="260" cy="135" r="8" fill="#0077B6"/>
+        <text x="268" y="150" font-size="10" fill="#023E8A">x₁(10,9)</text>
+        <circle cx="260" cy="25" r="8" fill="#0077B6"/>
+        <text x="268" y="22" font-size="10" fill="#023E8A">x₂(10,11)</text>
+        <circle cx="140" cy="130" r="8" fill="#52B788"/>
+        <text x="80" y="148" font-size="10" fill="#276749">x₃(8,9)</text>
+        <circle cx="380" cy="25" r="8" fill="#52B788"/>
+        <text x="385" y="22" font-size="10" fill="#276749">x₄(12,11)</text>
+        <!-- Mahal distances -->
+        <line x1="260" x2="260" y1="80" y2="127" stroke="#0077B6" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <line x1="260" x2="148" y1="80" y2="122" stroke="#52B788" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <text x="170" y="75" font-size="10" fill="#744210" font-weight="600">Mahal² = 2 for all four  ✓</text>
+      </svg>
+
+      <div class="math-block">
+        <div class="math-row section-header"><div class="math-label">Verify Mahal²=2 for all four points (deviations from µ)</div></div>
+        <div class="math-row">
+          <div class="math-label">x₁=(10,9): v−µ=(0,−1)</div>
+          <div class="math-expr">[0,−1]·Σ⁻¹·[0,−1]ᵀ = 2  ✓</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">x₂=(10,11): v−µ=(0,+1)</div>
+          <div class="math-expr">[0,+1]·Σ⁻¹·[0,+1]ᵀ = [0,1]·(−1,2)ᵀ = 2  ✓</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">x₃=(8,9): v−µ=(−2,−1)</div>
+          <div class="math-expr">[−2,−1]·Σ⁻¹·[−2,−1]ᵀ = [−2,−1]·(−1,0)ᵀ = 2  ✓</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">x₄=(12,11): v−µ=(+2,+1)</div>
+          <div class="math-expr">[+2,+1]·Σ⁻¹·[+2,+1]ᵀ = [+2,+1]·(1,0)ᵀ = 2  ✓</div>
+        </div>
+        <div class="math-row">
+          <div class="math-label">Therefore</div>
+          <div class="math-expr result"><span class="res">P = (1/2π)·e⁻¹ ≈ 0.0585  for all four points  ✓</span></div>
+        </div>
+      </div>
+      <div class="result-highlight">P(10,9) = P(10,11) = P(8,9) = P(12,11) = (1/2π)·e⁻¹ ≈ 0.0585</div>
+      <div class="callout callout-green">
+        <span class="callout-icon">🎓</span>
+        <span><strong>Why they're all equal:</strong> All four points lie on the same probability contour ellipse of the fitted Gaussian — they are all equally "typical" under the model, because the model was fitted to those exact four points symmetrically placed around the mean.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tool-wrapper">
+    <div class="tool-header"><div class="tool-icon">🎯</div><div><h4>Interactive: PDF Point Evaluator</h4><p>Click anywhere on the heatmap to compute P(x,y) and the full Mahalanobis calculation</p></div></div>
+    <div class="tool-body">
+      <div class="callout callout-yellow" style="margin-bottom:14px;"><span class="callout-icon">👆</span><span>Click anywhere to evaluate P(x,y). The four original data points (white circles) all sit on the same contour at density ≈ 0.0585. Try clicking between them and outside them!</span></div>
+      <canvas id="pdf-eval-canvas" height="330"></canvas>
+      <div class="res-box" id="pdf-eval-result">Click on the canvas to evaluate P(x,y) at any point.</div>
+    </div>
+  </div>
+
+  <div class="summary-banner">
+    <h3>🎓 Problem Set Summary</h3>
+    <p>
+      <strong>Q1:</strong> Minimising ℓ₂² loss over µ gives gradient −2Σ(xᵢ−µ)=0 → <strong>µ* = mean</strong>. &nbsp;
+      <strong>Q2:</strong> Minimising ℓ₁ loss gives a ±1 sign equation → <strong>µ* = median</strong>, and the unit ball is a diamond. &nbsp;
+      <strong>Q3:</strong> Setting d²(p,µ₁)=d²(p,µ₂) and expanding yields a <strong>linear decision boundary</strong> 3x+y−4=0. &nbsp;
+      <strong>Q4–6:</strong> A 2D Gaussian is parametrised by µ and Σ; density at any point is computed via the <strong>Mahalanobis distance</strong> inside the exponential.
+    </p>
+  </div>
+</section>
+
+</div>
+<footer><strong>ECE4076/5176 · Computer Vision · S1 2026</strong><br>Week 7 · Unsupervised Learning · Problem Set Solutions</footer>
+
+<script>
+function toggleSol(btn) {
+  btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+}
+
+function setupCanvas(id, h) {
+  const c = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  const W = c.offsetWidth;
+  c.width = W * dpr; c.height = h * dpr;
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, W, H: h };
+}
+
+function drawAxes(ctx, W, H, xmin, xmax, ymin, ymax) {
+  const toX = x => ((x-xmin)/(xmax-xmin))*W;
+  const toY = y => H - ((y-ymin)/(ymax-ymin))*H;
+  ctx.strokeStyle='#CBD5E0'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  for(let gx=Math.ceil(xmin); gx<=xmax; gx++) { if(!gx) continue; ctx.beginPath(); ctx.moveTo(toX(gx),0); ctx.lineTo(toX(gx),H); ctx.stroke(); }
+  for(let gy=Math.ceil(ymin); gy<=ymax; gy++) { if(!gy) continue; ctx.beginPath(); ctx.moveTo(0,toY(gy)); ctx.lineTo(W,toY(gy)); ctx.stroke(); }
+  ctx.setLineDash([]); ctx.strokeStyle='#718096'; ctx.lineWidth=1.5;
+  if(ymin<=0&&ymax>=0) { ctx.beginPath(); ctx.moveTo(0,toY(0)); ctx.lineTo(W,toY(0)); ctx.stroke(); }
+  if(xmin<=0&&xmax>=0) { ctx.beginPath(); ctx.moveTo(toX(0),0); ctx.lineTo(toX(0),H); ctx.stroke(); }
+  return { toX, toY };
+}
+
+// ── K-Means ──
+let kPts=[], kMean=null;
+function initKMeans() {
+  const c=document.getElementById('kmeans-canvas');
+  c.addEventListener('click', e => {
+    const r=c.getBoundingClientRect();
+    kPts.push({x:(e.clientX-r.left)/c.offsetWidth*10-5, y:5-(e.clientY-r.top)/300*10});
+    kMean=null; drawKMeans(); updateKR();
+  });
+  drawKMeans();
+}
+function drawKMeans() {
+  const {ctx,W,H}=setupCanvas('kmeans-canvas',300);
+  ctx.clearRect(0,0,W,H);
+  const {toX,toY}=drawAxes(ctx,W,H,-5,5,-5,5);
+  kPts.forEach(p=>{ctx.beginPath();ctx.arc(toX(p.x),toY(p.y),7,0,Math.PI*2);ctx.fillStyle='#0077B6';ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=2;ctx.stroke();});
+  if(kMean) {
+    ctx.strokeStyle='rgba(255,107,107,0.3)';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+    kPts.forEach(p=>{ctx.beginPath();ctx.moveTo(toX(p.x),toY(p.y));ctx.lineTo(toX(kMean.x),toY(kMean.y));ctx.stroke();});
+    ctx.setLineDash([]);
+    const mx=toX(kMean.x),my=toY(kMean.y),s=11;
+    ctx.strokeStyle='#FF6B6B';ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(mx-s,my);ctx.lineTo(mx+s,my);ctx.moveTo(mx,my-s);ctx.lineTo(mx,my+s);ctx.stroke();
+    ctx.fillStyle='#FF6B6B';ctx.font='bold 12px DM Sans,sans-serif';ctx.textAlign='left';
+    ctx.fillText(`µ*=(${kMean.x.toFixed(2)}, ${kMean.y.toFixed(2)})`,mx+14,my-6);
+  }
+  ctx.fillStyle='#718096';ctx.font='12px DM Mono,monospace';ctx.textAlign='left';ctx.fillText(`n=${kPts.length}`,10,20);
+}
+function findMean() { if(!kPts.length)return; kMean={x:kPts.reduce((s,p)=>s+p.x,0)/kPts.length,y:kPts.reduce((s,p)=>s+p.y,0)/kPts.length}; drawKMeans();updateKR(); }
+function clearKMeans() { kPts=[];kMean=null;drawKMeans();updateKR(); }
+function addRandomPoints() { for(let i=0;i<8;i++)kPts.push({x:(Math.random()-.5)*8,y:(Math.random()-.5)*8}); kMean=null;drawKMeans();updateKR(); }
+function updateKR() {
+  const el=document.getElementById('kmeans-result');
+  if(kPts.length<2){el.innerHTML='Add at least 2 points to see the result.';return;}
+  const mx=kPts.reduce((s,p)=>s+p.x,0)/kPts.length, my=kPts.reduce((s,p)=>s+p.y,0)/kPts.length;
+  const loss=kPts.reduce((s,p)=>s+(p.x-mx)**2+(p.y-my)**2,0);
+  el.innerHTML=kMean?`µ* = (<strong>${mx.toFixed(3)}</strong>, <strong>${my.toFixed(3)}</strong>) &nbsp;·&nbsp; Total ℓ₂² loss = <strong>${loss.toFixed(3)}</strong>`:kPts.length+` points added. Press Find Optimal µ*.`;
+}
+
+// ── Norm Ball ──
+function updateNormVis() {
+  const p=parseFloat(document.getElementById('norm-p').value);
+  const r=parseFloat(document.getElementById('norm-r').value);
+  document.getElementById('norm-p-val').textContent=`p=${p.toFixed(1)}`+(Math.abs(p-1)<.05?' (ℓ₁)':Math.abs(p-2)<.05?' (ℓ₂)':'');
+  document.getElementById('norm-r-val').textContent=`r=${r.toFixed(1)}`;
+  const {ctx,W,H}=setupCanvas('norm-canvas',310);
+  ctx.clearRect(0,0,W,H);
+  const {toX,toY}=drawAxes(ctx,W,H,-3,3,-3,3);
+  ctx.beginPath();
+  for(let i=0;i<=200;i++){const a=(i/200)*Math.PI*2; i?ctx.lineTo(toX(r*Math.cos(a)),toY(r*Math.sin(a))):ctx.moveTo(toX(r*Math.cos(a)),toY(r*Math.sin(a)));}
+  ctx.strokeStyle='rgba(0,119,182,0.2)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();
+  for(let i=0;i<=400;i++){
+    const a=(i/400)*Math.PI*2, ca=Math.cos(a), sa=Math.sin(a);
+    const x=r*Math.sign(ca)*Math.pow(Math.abs(ca),2/p), y=r*Math.sign(sa)*Math.pow(Math.abs(sa),2/p);
+    i?ctx.lineTo(toX(x),toY(y)):ctx.moveTo(toX(x),toY(y));
+  }
+  ctx.closePath();
+  const g=ctx.createRadialGradient(toX(0),toY(0),0,toX(0),toY(0),W*.35);
+  g.addColorStop(0,'rgba(255,184,0,0.15)');g.addColorStop(1,'rgba(0,119,182,0.08)');
+  ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle=p<1.5?'#FF6B6B':p<2.5?'#0077B6':'#52B788';ctx.lineWidth=2.5;ctx.stroke();
+  const desc=document.getElementById('norm-description');
+  if(p<1.1) desc.innerHTML='<strong>p=1 (ℓ₁/Manhattan):</strong> Diamond shape. Each quadrant is a line segment with slope ±1. Minimising ℓ₁ loss → optimal centre = <em>median</em>. Robust to outliers.';
+  else if(p>1.9&&p<2.1) desc.innerHTML='<strong>p=2 (ℓ₂/Euclidean):</strong> Perfect circle. All directions treated equally. Minimising ℓ₂² loss → optimal centre = <em>mean</em>. Sensitive to outliers.';
+  else if(p>7) desc.innerHTML='<strong>p→∞ (Chebyshev):</strong> Square aligned with axes. Distance = max(|x|,|y|). The ℓ∞ ball is the square.';
+  else desc.innerHTML=`<strong>p=${p.toFixed(1)}:</strong> Intermediate norm. As p grows 1→∞, ball morphs: diamond → circle → square. Notice how the corners round out then square off again.`;
+}
+
+// ── Outlier Demo ──
+const baseData=[1,2,2,3,3,3,4,4,4,4];
+function updateOutlierDemo() {
+  const out=parseFloat(document.getElementById('outlier-pos').value);
+  document.getElementById('outlier-val').textContent=`x=${out.toFixed(1)}`;
+  const data=[...baseData,out];
+  const mean=data.reduce((s,v)=>s+v,0)/data.length;
+  const sorted=[...data].sort((a,b)=>a-b);
+  const med=sorted.length%2===0?(sorted[sorted.length/2-1]+sorted[sorted.length/2])/2:sorted[Math.floor(sorted.length/2)];
+  const {ctx,W,H}=setupCanvas('outlier-canvas',190);
+  ctx.clearRect(0,0,W,H);
+  const toX=x=>((x-0)/(55-0))*(W-60)+30, cy=H/2;
+  ctx.strokeStyle='#CBD5E0';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(30,cy);ctx.lineTo(W-30,cy);ctx.stroke();
+  for(let x=0;x<=50;x+=5){ctx.beginPath();ctx.moveTo(toX(x),cy-4);ctx.lineTo(toX(x),cy+4);ctx.stroke();ctx.fillStyle='#A0AEC0';ctx.font='11px DM Mono,monospace';ctx.textAlign='center';ctx.fillText(x,toX(x),cy+16);}
+  baseData.forEach(x=>{ctx.beginPath();ctx.arc(toX(x),cy,8,0,Math.PI*2);ctx.fillStyle='#0077B6';ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=2;ctx.stroke();});
+  ctx.beginPath();ctx.arc(toX(out),cy,10,0,Math.PI*2);ctx.fillStyle='#FF6B6B';ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle='#FF6B6B';ctx.font='bold 11px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText('outlier',toX(out),cy-20);
+  ctx.strokeStyle='#FF6B6B';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(toX(mean),cy-28);ctx.lineTo(toX(mean),cy+28);ctx.stroke();
+  ctx.fillStyle='#FF6B6B';ctx.font='bold 12px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText(`mean=${mean.toFixed(1)}`,toX(mean),cy-34);
+  ctx.strokeStyle='#52B788';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(toX(med),cy-28);ctx.lineTo(toX(med),cy+28);ctx.stroke();
+  ctx.fillStyle='#52B788';ctx.font='bold 12px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText(`median=${med.toFixed(1)}`,toX(med),cy-34);
+  document.getElementById('outlier-result').innerHTML=`Mean = <strong style="color:#FF6B6B">${mean.toFixed(2)}</strong> &nbsp;·&nbsp; Median = <strong style="color:#52B788">${med.toFixed(2)}</strong> &nbsp;·&nbsp; Mean shifted ${(mean-3.09).toFixed(2)} from base; median only ${(med-3).toFixed(2)}.`;
+}
+
+// ── Decision Boundary ──
+let mu1={x:-1,y:2},mu2={x:2,y:3},drag=null;
+function initBoundary() {
+  const c=document.getElementById('boundary-canvas');
+  const GP=e=>{const r=c.getBoundingClientRect();return{x:((e.touches?e.touches[0].clientX:e.clientX)-r.left)/c.offsetWidth*14-7,y:7-((e.touches?e.touches[0].clientY:e.clientY)-r.top)/370*14};};
+  const near=p=>((p.x-mu1.x)**2+(p.y-mu1.y)**2<.3?'mu1':((p.x-mu2.x)**2+(p.y-mu2.y)**2<.3?'mu2':null));
+  c.addEventListener('mousedown',e=>{drag=near(GP(e));});
+  c.addEventListener('touchstart',e=>{drag=near(GP(e));e.preventDefault();},{passive:false});
+  c.addEventListener('mousemove',e=>{if(!drag)return;const p=GP(e);drag==='mu1'?mu1=p:mu2=p;drawBoundary();});
+  c.addEventListener('touchmove',e=>{if(!drag)return;const p=GP(e);e.preventDefault();drag==='mu1'?mu1=p:mu2=p;drawBoundary();},{passive:false});
+  c.addEventListener('mouseup',()=>drag=null);c.addEventListener('touchend',()=>drag=null);
+  drawBoundary();
+}
+function drawBoundary() {
+  const {ctx,W,H}=setupCanvas('boundary-canvas',370);
+  ctx.clearRect(0,0,W,H);
+  const lim=7, {toX,toY}=drawAxes(ctx,W,H,-lim,lim,-lim,lim);
+  const id=ctx.createImageData(W,H);
+  for(let px=0;px<W;px++) for(let py=0;py<H;py++){
+    const dx=(px/W)*14-lim,dy=lim-(py/H)*14;
+    const d1=(dx-mu1.x)**2+(dy-mu1.y)**2,d2=(dx-mu2.x)**2+(dy-mu2.y)**2;
+    const i=(py*W+px)*4;
+    if(d1<d2){id.data[i]=0;id.data[i+1]=119;id.data[i+2]=182;id.data[i+3]=25;}
+    else{id.data[i]=255;id.data[i+1]=107;id.data[i+2]=107;id.data[i+3]=25;}
+  }
+  ctx.putImageData(id,0,0);
+  const a=2*(mu2.x-mu1.x),b=2*(mu2.y-mu1.y),c=mu1.x**2+mu1.y**2-mu2.x**2-mu2.y**2;
+  const pts=[];
+  [-lim,lim].forEach(x=>{if(Math.abs(b)>.001){const y=(-a*x-c)/b;if(y>=-lim&&y<=lim)pts.push({x,y});}});
+  [-lim,lim].forEach(y=>{if(Math.abs(a)>.001){const x=(-b*y-c)/a;if(x>=-lim&&x<=lim)pts.push({x,y});}});
+  if(pts.length>=2){ctx.beginPath();ctx.moveTo(toX(pts[0].x),toY(pts[0].y));ctx.lineTo(toX(pts[1].x),toY(pts[1].y));ctx.strokeStyle='#FFB800';ctx.lineWidth=3;ctx.setLineDash([8,4]);ctx.stroke();ctx.setLineDash([]);}
+  const mid={x:(mu1.x+mu2.x)/2,y:(mu1.y+mu2.y)/2};
+  ctx.strokeStyle='rgba(255,184,0,0.4)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(toX(mu1.x),toY(mu1.y));ctx.lineTo(toX(mu2.x),toY(mu2.y));ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();ctx.arc(toX(mid.x),toY(mid.y),4,0,Math.PI*2);ctx.fillStyle='#FFB800';ctx.fill();
+  [[mu1,'#0077B6','µ₁'],[mu2,'#FF6B6B','µ₂']].forEach(([m,col,lbl])=>{ctx.beginPath();ctx.arc(toX(m.x),toY(m.y),12,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle=col;ctx.font='bold 13px DM Sans,sans-serif';ctx.textAlign='left';ctx.fillText(`${lbl}=(${m.x.toFixed(1)},${m.y.toFixed(1)})`,toX(m.x)+15,toY(m.y)-5);});
+  const dn=Math.sqrt(a**2+b**2)||1;
+  document.getElementById('boundary-result').innerHTML=`Boundary: <strong style="font-family:'DM Mono',monospace">${(a/dn).toFixed(2)}x + ${(b/dn).toFixed(2)}y + ${(c/dn).toFixed(2)} = 0</strong> &nbsp;·&nbsp; Blue = assigned to µ₁, Red = assigned to µ₂, Yellow dashed = boundary`;
+}
+
+// ── Covariance ──
+let covPts=[{x:10,y:9},{x:10,y:11},{x:8,y:9},{x:12,y:11}];
+function initCovInputs() {
+  const cont=document.getElementById('point-inputs');
+  covPts.forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.style.cssText='background:var(--mist);border-radius:10px;padding:14px;border:1px solid var(--border);';
+    d.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;margin-bottom:8px;">Point x${i+1}</div><div style="display:flex;gap:8px;align-items:center;"><label style="font-size:13px">x:</label><input type="number" value="${p.x}" step="0.5" style="width:62px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-family:'DM Mono',monospace;font-size:13px;" oninput="covPts[${i}].x=parseFloat(this.value)||0;updateCov()"><label style="font-size:13px">y:</label><input type="number" value="${p.y}" step="0.5" style="width:62px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-family:'DM Mono',monospace;font-size:13px;" oninput="covPts[${i}].y=parseFloat(this.value)||0;updateCov()"></div>`;
+    cont.appendChild(d);
+  });
+  updateCov();
+}
+function updateCov() {
+  const n=covPts.length;
+  const mx=covPts.reduce((s,p)=>s+p.x,0)/n, my=covPts.reduce((s,p)=>s+p.y,0)/n;
+  const sx2=covPts.reduce((s,p)=>s+(p.x-mx)**2,0)/n, sy2=covPts.reduce((s,p)=>s+(p.y-my)**2,0)/n;
+  const sxy=covPts.reduce((s,p)=>s+(p.x-mx)*(p.y-my),0)/n;
+  const {ctx,W,H}=setupCanvas('cov-canvas',280);
+  ctx.clearRect(0,0,W,H);
+  const allX=covPts.map(p=>p.x),allY=covPts.map(p=>p.y),pad=4;
+  const xmin=Math.min(...allX)-pad,xmax=Math.max(...allX)+pad,ymin=Math.min(...allY)-pad,ymax=Math.max(...allY)+pad;
+  const toXv=x=>((x-xmin)/(xmax-xmin))*W, toYv=y=>H-((y-ymin)/(ymax-ymin))*H;
+  drawAxes(ctx,W,H,xmin,xmax,ymin,ymax);
+  const det=sx2*sy2-sxy**2;
+  if(det>0.001){
+    const theta=.5*Math.atan2(2*sxy,sx2-sy2);
+    const lam1=(sx2+sy2)/2+Math.sqrt(((sx2-sy2)/2)**2+sxy**2), lam2=(sx2+sy2)/2-Math.sqrt(((sx2-sy2)/2)**2+sxy**2);
+    const sa=Math.abs(toXv(mx+Math.sqrt(Math.max(lam1,.01))*2)-toXv(mx)), sb=Math.abs(toYv(my)-toYv(my+Math.sqrt(Math.max(lam2,.01))*2));
+    ctx.save();ctx.translate(toXv(mx),toYv(my));ctx.rotate(-theta);ctx.beginPath();ctx.ellipse(0,0,sa,sb,0,0,Math.PI*2);ctx.strokeStyle='rgba(82,183,136,0.7)';ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);ctx.restore();
+  }
+  covPts.forEach(p=>{ctx.beginPath();ctx.arc(toXv(p.x),toYv(p.y),7,0,Math.PI*2);ctx.fillStyle='#0077B6';ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=2;ctx.stroke();});
+  const s=9; ctx.strokeStyle='#FF6B6B';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(toXv(mx)-s,toYv(my));ctx.lineTo(toXv(mx)+s,toYv(my));ctx.moveTo(toXv(mx),toYv(my)-s);ctx.lineTo(toXv(mx),toYv(my)+s);ctx.stroke();
+  document.getElementById('cov-result').innerHTML=`µ=(${mx.toFixed(2)}, ${my.toFixed(2)}) &nbsp;·&nbsp; σ²_x=<strong>${sx2.toFixed(3)}</strong> &nbsp;·&nbsp; σ²_y=<strong>${sy2.toFixed(3)}</strong> &nbsp;·&nbsp; σ_xy=<strong>${sxy.toFixed(3)}</strong> &nbsp;·&nbsp; Σ=[${sx2.toFixed(2)}, ${sxy.toFixed(2)}; ${sxy.toFixed(2)}, ${sy2.toFixed(2)}]`;
+}
+
+// ── Gaussian ──
+function gPDF(x,y,mx,my,sx2,sy2,sxy){const det=sx2*sy2-sxy**2;if(det<=0)return 0;const i11=sy2/det,i12=-sxy/det,i22=sx2/det,dx=x-mx,dy=y-my;return(1/(2*Math.PI*Math.sqrt(det)))*Math.exp(-.5*(dx**2*i11+2*dx*dy*i12+dy**2*i22));}
+function drawHeat(ctx,W,H,xmin,xmax,ymin,ymax,mx,my,sx2,sy2,sxy,step){const pm=gPDF(mx,my,mx,my,sx2,sy2,sxy);for(let px=0;px<W;px+=step)for(let py=0;py<H;py+=step){const x=xmin+(px/W)*(xmax-xmin),y=ymax-(py/H)*(ymax-ymin),t=gPDF(x,y,mx,my,sx2,sy2,sxy)/pm;let r,g,b;if(t<.3){const s=t/.3;r=2;g=Math.round(s*119+60);b=Math.round(s*182+140);}else if(t<.7){const s=(t-.3)/.4;r=Math.round(s*253);g=Math.round(119+s*80);b=Math.round(182-s*182);}else{const s=(t-.7)/.3;r=253;g=Math.round(199+s*50);b=Math.round(s*200);}ctx.fillStyle=`rgba(${r},${g},${b},${.4+t*.6})`;ctx.fillRect(px,py,step,step);}}
+function drawConts(ctx,W,H,xmin,xmax,ymin,ymax,mx,my,sx2,sy2,sxy,toX,toY){const det=sx2*sy2-sxy**2;if(det<=0)return;const theta=.5*Math.atan2(2*sxy,sx2-sy2),lam1=(sx2+sy2)/2+Math.sqrt(((sx2-sy2)/2)**2+sxy**2),lam2=(sx2+sy2)/2-Math.sqrt(((sx2-sy2)/2)**2+sxy**2);[.15,.35,.6,.85].forEach(lv=>{const chi2=-2*Math.log(lv),a=Math.sqrt(lam1*chi2),b=Math.sqrt(Math.max(lam2*chi2,0)),sa=Math.abs(toX(mx+a)-toX(mx)),sb=Math.abs(toY(my)-toY(my+b));ctx.save();ctx.translate(toX(mx),toY(my));ctx.rotate(-theta);ctx.beginPath();ctx.ellipse(0,0,sa,sb,0,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=1.3;ctx.stroke();ctx.restore();});}
+function updateGaussian(){
+  const sx2=parseFloat(document.getElementById('g-sx').value),sy2=parseFloat(document.getElementById('g-sy').value),sxy=parseFloat(document.getElementById('g-sxy').value);
+  document.getElementById('g-sx-val').textContent=sx2.toFixed(1);document.getElementById('g-sy-val').textContent=sy2.toFixed(1);document.getElementById('g-sxy-val').textContent=sxy.toFixed(2);
+  const {ctx,W,H}=setupCanvas('gaussian-canvas',310);ctx.clearRect(0,0,W,H);
+  const lim=6,mx=0,my=0, {toX,toY}=drawAxes(ctx,W,H,-lim,lim,-lim,lim);
+  const det=sx2*sy2-sxy**2;
+  if(det<=0){ctx.fillStyle='#FF6B6B';ctx.font='14px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText('⚠ Invalid covariance (det ≤ 0)',W/2,H/2);document.getElementById('gaussian-result').innerHTML='<strong style="color:#FF6B6B">⚠ Invalid covariance matrix.</strong> Need det(Σ)>0. Reduce |σ_xy|.';return;}
+  drawHeat(ctx,W,H,-lim,lim,-lim,lim,mx,my,sx2,sy2,sxy,4);
+  drawConts(ctx,W,H,-lim,lim,-lim,lim,mx,my,sx2,sy2,sxy,toX,toY);
+  ctx.beginPath();ctx.arc(toX(mx),toY(my),5,0,Math.PI*2);ctx.fillStyle='white';ctx.fill();
+  document.getElementById('gaussian-result').innerHTML=`|Σ|=${det.toFixed(3)} &nbsp;·&nbsp; Peak P(µ)=${gPDF(mx,my,mx,my,sx2,sy2,sxy).toFixed(4)} &nbsp;·&nbsp; Covariance: ${sxy>0?'positive → ellipse tilts ↗':sxy<0?'negative → ellipse tilts ↘':'zero → axis-aligned ellipse'}`;
+}
+
+// ── PDF Evaluator ──
+function initPDFEval(){
+  const c=document.getElementById('pdf-eval-canvas');
+  const pts=[{x:10,y:9},{x:10,y:11},{x:8,y:9},{x:12,y:11}],mx=10,my=10,sx2=2,sy2=1,sxy=1;
+  function draw(cp){
+    const {ctx,W,H}=setupCanvas('pdf-eval-canvas',330);ctx.clearRect(0,0,W,H);
+    const xmin=4,xmax=16,ymin=4,ymax=16, {toX,toY}=drawAxes(ctx,W,H,xmin,xmax,ymin,ymax);
+    drawHeat(ctx,W,H,xmin,xmax,ymin,ymax,mx,my,sx2,sy2,sxy,3);
+    drawConts(ctx,W,H,xmin,xmax,ymin,ymax,mx,my,sx2,sy2,sxy,toX,toY);
+    pts.forEach((p,i)=>{ctx.beginPath();ctx.arc(toX(p.x),toY(p.y),9,0,Math.PI*2);ctx.fillStyle='white';ctx.fill();ctx.strokeStyle='#0077B6';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#023E8A';ctx.font='bold 10px DM Mono,monospace';ctx.textAlign='center';ctx.fillText(`x${i+1}`,toX(p.x),toY(p.y)-14);});
+    ctx.beginPath();ctx.arc(toX(mx),toY(my),6,0,Math.PI*2);ctx.fillStyle='#FF6B6B';ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#FF6B6B';ctx.font='bold 11px DM Sans,sans-serif';ctx.textAlign='left';ctx.fillText('µ',toX(mx)+9,toY(my)-4);
+    if(cp){ctx.beginPath();ctx.arc(toX(cp.x),toY(cp.y),8,0,Math.PI*2);ctx.fillStyle='#FFB800';ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=2.5;ctx.stroke();ctx.fillStyle='#744210';ctx.font='bold 12px DM Sans,sans-serif';ctx.textAlign='left';ctx.fillText(`P=${cp.pv.toFixed(4)}`,toX(cp.x)+12,toY(cp.y)-8);}
+  }
+  draw(null);
+  c.addEventListener('click',function(e){
+    const r=c.getBoundingClientRect(),xmin=4,xmax=16,ymin=4,ymax=16;
+    const x=xmin+(e.clientX-r.left)/c.offsetWidth*(xmax-xmin), y=ymax-(e.clientY-r.top)/(c.offsetHeight||330)*(ymax-ymin);
+    const pv=gPDF(x,y,mx,my,sx2,sy2,sxy),det=sx2*sy2-sxy**2,dx=x-mx,dy=y-my;
+    const maha=dx**2*(sy2/det)+2*dx*dy*(-sxy/det)+dy**2*(sx2/det);
+    draw({x,y,pv});
+    document.getElementById('pdf-eval-result').innerHTML=`Point (<strong>${x.toFixed(2)}</strong>, <strong>${y.toFixed(2)}</strong>) &nbsp;·&nbsp; Mahalanobis² = <strong>${maha.toFixed(3)}</strong> &nbsp;·&nbsp; P = (1/2π)·exp(−${(maha/2).toFixed(3)}) = <strong>${pv.toFixed(5)}</strong>`;
+  });
+}
+
+window.addEventListener('load',()=>{initKMeans();updateNormVis();updateOutlierDemo();initBoundary();initCovInputs();updateGaussian();initPDFEval();});
+window.addEventListener('resize',()=>{drawKMeans();updateNormVis();updateOutlierDemo();drawBoundary();updateCov();updateGaussian();});
+</script>
+</body>
+</html>
