@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 10 — Convolutional Neural Networks (Interactive Lecture)</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #1a2332;
+    --panel-light: #243447;
+    --accent: #4fc3f7;
+    --accent2: #ffb74d;
+    --accent3: #ba68c8;
+    --pos: #66bb6a;
+    --neg: #ef5350;
+    --neutral: #455a64;
+    --text: #e0e6ed;
+    --text-dim: #90a4ae;
+    --highlight: #ffeb3b;
+    --pad: #607d8b;
+    --kernel: #ab47bc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 20px;
+    line-height: 1.65;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 {
+    color: var(--accent);
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 12px;
+    font-size: 2.2em;
+  }
+  h2 {
+    color: var(--accent2);
+    margin-top: 50px;
+    padding: 12px 20px;
+    background: linear-gradient(90deg, rgba(255,183,77,0.18), transparent);
+    border-left: 5px solid var(--accent2);
+    font-size: 1.5em;
+  }
+  h3 {
+    color: var(--accent);
+    margin-top: 30px;
+    font-size: 1.2em;
+  }
+  h4 {
+    color: var(--accent3);
+    margin-top: 20px;
+  }
+  .section {
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 28px;
+    margin: 24px 0;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+  }
+  .subsection {
+    background: var(--panel-light);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 18px 0;
+  }
+
+  /* ===== Grids ===== */
+  .grid-container {
+    display: inline-block;
+    margin: 12px;
+    vertical-align: top;
+    text-align: center;
+  }
+  .grid {
+    display: grid;
+    gap: 3px;
+    background: var(--neutral);
+    padding: 5px;
+    border-radius: 6px;
+    margin: 0 auto;
+  }
+  .cell {
+    background: var(--bg);
+    color: var(--text);
+    padding: 12px;
+    text-align: center;
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-weight: 600;
+    min-width: 42px;
+    min-height: 42px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95em;
+  }
+  .cell.positive { background: rgba(102, 187, 106, 0.25); color: #a5d6a7; }
+  .cell.negative { background: rgba(239, 83, 80, 0.25); color: #ef9a9a; }
+  .cell.zero { color: var(--text-dim); }
+  .cell.highlight {
+    background: var(--highlight);
+    color: #000;
+    transform: scale(1.15);
+    z-index: 10;
+    box-shadow: 0 0 12px rgba(255, 235, 59, 0.6);
+  }
+  .cell.kernel-overlay {
+    background: rgba(171, 71, 188, 0.45);
+    border: 2px solid var(--kernel);
+    box-shadow: 0 0 8px rgba(171, 71, 188, 0.4);
+  }
+  .cell.padding {
+    background: rgba(96, 125, 139, 0.35);
+    color: var(--text-dim);
+    font-style: italic;
+    border: 1px dashed var(--text-dim);
+  }
+  .cell.kernel-cell { background: rgba(171, 71, 188, 0.3); color: #e1bee7; }
+  .label {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.9em;
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ===== Formula & callout boxes ===== */
+  .formula {
+    background: rgba(79, 195, 247, 0.1);
+    border-left: 4px solid var(--accent);
+    padding: 16px 22px;
+    margin: 16px 0;
+    font-family: 'SF Mono', Menlo, monospace;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 1.05em;
+  }
+  .why-box {
+    background: rgba(255, 183, 77, 0.1);
+    border-left: 4px solid var(--accent2);
+    padding: 16px 22px;
+    margin: 16px 0;
+    border-radius: 6px;
+  }
+  .why-box::before {
+    content: "💡 Why this works";
+    display: block;
+    color: var(--accent2);
+    font-weight: 700;
+    margin-bottom: 10px;
+    font-size: 1.05em;
+  }
+  .question-box {
+    background: rgba(186, 104, 200, 0.1);
+    border-left: 4px solid var(--accent3);
+    padding: 16px 22px;
+    margin: 16px 0;
+    border-radius: 6px;
+  }
+  .question-box::before {
+    content: "❓ Anticipated student question";
+    display: block;
+    color: var(--accent3);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .conclusion {
+    background: linear-gradient(135deg, rgba(102, 187, 106, 0.18), rgba(79, 195, 247, 0.15));
+    border: 1px solid var(--pos);
+    padding: 22px;
+    border-radius: 12px;
+    margin: 22px 0;
+  }
+  .conclusion::before {
+    content: "🎯 Key takeaway";
+    display: block;
+    color: var(--pos);
+    font-weight: 700;
+    font-size: 1.15em;
+    margin-bottom: 12px;
+  }
+
+  /* ===== Controls ===== */
+  .controls {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin: 22px 0;
+    padding: 18px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    align-items: flex-end;
+  }
+  .control { display: flex; flex-direction: column; gap: 6px; }
+  .control label { font-size: 0.85em; color: var(--text-dim); }
+  .control input[type="range"] { width: 160px; accent-color: var(--accent); }
+  .control .value {
+    color: var(--accent);
+    font-weight: 700;
+    font-family: 'SF Mono', monospace;
+    font-size: 1.05em;
+  }
+  button {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 10px 22px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95em;
+  }
+  button:hover { background: #29b6f6; transform: translateY(-2px); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  button.secondary { background: var(--accent3); }
+  button.secondary:hover { background: #9c27b0; }
+
+  /* ===== Tables ===== */
+  table.calc {
+    border-collapse: collapse;
+    margin: 16px 0;
+    width: 100%;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.92em;
+  }
+  table.calc td, table.calc th {
+    padding: 10px 12px;
+    border: 1px solid var(--neutral);
+    text-align: center;
+  }
+  table.calc th { background: rgba(79, 195, 247, 0.2); color: var(--accent); }
+  table.calc td.product { color: var(--accent2); }
+  table.calc td.sum { color: var(--pos); font-weight: 700; font-size: 1.05em; }
+  table.calc tr.highlight-row { background: rgba(255, 235, 59, 0.1); }
+
+  /* ===== Layout helpers ===== */
+  .flex-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    justify-content: center;
+    margin: 18px 0;
+  }
+  .step-arrow {
+    font-size: 2.2em;
+    color: var(--accent);
+    font-weight: 300;
+  }
+  .step-eq {
+    font-size: 2em;
+    color: var(--accent2);
+    font-weight: 300;
+  }
+
+  /* ===== TOC ===== */
+  .toc {
+    background: rgba(0,0,0,0.35);
+    padding: 22px;
+    border-radius: 10px;
+    margin: 22px 0;
+  }
+  .toc strong { color: var(--accent); display: block; margin-bottom: 8px; font-size: 1.1em; }
+  .toc a {
+    color: var(--accent);
+    text-decoration: none;
+    display: block;
+    padding: 7px 0;
+    transition: padding 0.2s;
+  }
+  .toc a:hover { padding-left: 12px; color: var(--accent2); }
+
+  /* ===== FLOP / metric display ===== */
+  .metric-display {
+    font-family: 'SF Mono', monospace;
+    background: rgba(0,0,0,0.45);
+    padding: 18px;
+    border-radius: 10px;
+    margin: 16px 0;
+    line-height: 2;
+  }
+  .metric-big {
+    font-size: 1.7em;
+    color: var(--accent2);
+    font-weight: 700;
+  }
+  .metric-label {
+    color: var(--text-dim);
+    font-size: 0.95em;
+  }
+
+  /* ===== Animations ===== */
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  .animated { animation: pulse 1.5s ease-in-out infinite; }
+
+  /* ===== Stage indicator ===== */
+  .step-indicator {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--bg);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 32px;
+    font-weight: 700;
+    margin-right: 10px;
+    font-family: 'SF Mono', monospace;
+  }
+
+  /* ===== Channel display ===== */
+  .channel-stack {
+    position: relative;
+    display: inline-block;
+    margin: 15px;
+  }
+  .channel-label {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--kernel);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* ===== Diagram boxes ===== */
+  .diagram-box {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--neutral);
+    padding: 18px;
+    border-radius: 10px;
+    margin: 16px 0;
+  }
+
+  /* ===== Sliding window overlay ===== */
+  .sliding-container {
+    position: relative;
+    display: inline-block;
+  }
+
+  canvas {
+    background: var(--bg);
+    border: 1px solid var(--neutral);
+    border-radius: 8px;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .legend {
+    display: flex;
+    gap: 22px;
+    justify-content: center;
+    margin: 14px 0;
+    font-size: 0.9em;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .legend-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .pos-text { color: var(--pos); font-weight: 700; }
+  .neg-text { color: var(--neg); font-weight: 700; }
+  .accent-text { color: var(--accent); font-weight: 700; }
+  .accent2-text { color: var(--accent2); font-weight: 700; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin: 20px 0;
+  }
+  @media (max-width: 800px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Week 10 — Convolutional Neural Networks</h1>
+<p style="color: var(--text-dim); font-style: italic; font-size: 1.05em;">
+Interactive lecture material · Full problem set walkthrough with visual derivations
+</p>
+
+<div class="toc">
+  <strong>Lecture roadmap</strong>
+  <a href="#intro">§0 · Why CNNs? The cost of using MLPs on images</a>
+  <a href="#bg">§1 · Background: convolution, kernels, and what they detect</a>
+  <a href="#q1">§2 · Problem 1: 2D convolution by hand — finding features</a>
+  <a href="#q2">§3 · Problem 2: Padding and its hidden side effects</a>
+  <a href="#q3">§4 · Problem 3: Multi-channel convolution</a>
+  <a href="#q4">§5 · Problem 4: Counting FLOPs and why stride matters</a>
+  <a href="#q5">§6 · Problem 5: Backpropagation through a conv layer</a>
+  <a href="#alexnet">§7 · Synthesis: putting it all together in AlexNet</a>
+</div>
+
+<!-- ============ INTRO ============ -->
+<div class="section" id="intro">
+<h2>§0 · Why do we need CNNs?</h2>
+
+<p>Before we touch a single problem, let's understand <em>why convolutional networks exist at all</em>. The notes give us a striking example: a single MLP layer that maps a 224×224×3 image to 1024 features needs over 150 million parameters. Let's see this live.</p>
+
+<h3>The MLP cost explorer</h3>
+<p>Move the sliders to see how parameter count explodes with image size. This is the problem CNNs were built to solve.</p>
+
+<div class="controls">
+  <div class="control">
+    <label>Image height/width (H = W)</label>
+    <input type="range" id="mlpH" min="32" max="512" step="32" value="224">
+    <span class="value"><span id="mlpHVal">224</span> px</span>
+  </div>
+  <div class="control">
+    <label>Channels (1=gray, 3=RGB)</label>
+    <input type="range" id="mlpC" min="1" max="3" value="3">
+    <span class="value"><span id="mlpCVal">3</span></span>
+  </div>
+  <div class="control">
+    <label>Output neurons</label>
+    <input type="range" id="mlpOut" min="128" max="4096" step="128" value="1024">
+    <span class="value"><span id="mlpOutVal">1024</span></span>
+  </div>
+</div>
+
+<div class="metric-display">
+  <span class="metric-label">Input pixels:</span> <span id="mlpInPx" class="metric-big">150,528</span><br>
+  <span class="metric-label">Parameters (weights + biases):</span> <span id="mlpParams" class="metric-big">154,141,696</span><br>
+  <span class="metric-label">Memory at FP32:</span> <span id="mlpMem" class="metric-big">587.6 MB</span>
+</div>
+
+<div class="why-box">
+A single MLP layer on a moderately-sized image already eats hundreds of megabytes of memory just for parameters. Doubling the image side quadruples this. This is unsustainable, and it ignores all the other layers we'd want to stack on top.
+</div>
+
+<div class="conclusion">
+CNNs solve this with two big ideas:
+<br><br>
+<strong>1. Local connectivity</strong> — a neuron only looks at a small spatial region of the input, not the entire image.
+<br><br>
+<strong>2. Weight sharing</strong> — the same small filter is slid across the whole image, so we learn one set of weights that detects a feature anywhere it appears.
+<br><br>
+These two inductive biases reduce parameter counts by factors of thousands.
+</div>
+</div>
+
+<!-- ============ BACKGROUND ============ -->
+<div class="section" id="bg">
+<h2>§1 · Background: what is convolution doing?</h2>
+
+<p>Before we compute, let's make sure we agree on the picture. A convolution slides a small kernel across the input, and at each position computes a weighted sum.</p>
+
+<h3>The output-size formula — derive, don't memorize</h3>
+
+<div class="formula">
+H<sub>out</sub> = ⌊ (H<sub>in</sub> + 2P − K) / S ⌋ + 1
+</div>
+
+<p>Let's understand <em>why</em> this formula looks the way it does. Consider an input of size H<sub>in</sub> and a kernel of size K, with no padding and stride 1.</p>
+
+<div class="diagram-box">
+<p><span class="step-indicator">1</span>The kernel's leftmost position is index 0. Its rightmost valid position is H<sub>in</sub> − K (any further right and the kernel falls off the edge).</p>
+<p><span class="step-indicator">2</span>That gives us a sliding range of H<sub>in</sub> − K. We step through it with stride S, so we get (H<sub>in</sub> − K) / S steps.</p>
+<p><span class="step-indicator">3</span>Add 1 for the starting position. Padding P added on each side effectively grows the input to H<sub>in</sub> + 2P, hence the 2P in the numerator.</p>
+</div>
+
+<h3>Live demonstration — sliding window animation</h3>
+<p>Watch the kernel slide across the input. The purple highlighted region shows where the kernel is currently sitting, and the corresponding output cell lights up in yellow.</p>
+
+<div class="controls">
+  <div class="control">
+    <label>Stride</label>
+    <input type="range" id="bgStride" min="1" max="3" value="1">
+    <span class="value">S = <span id="bgStrideVal">1</span></span>
+  </div>
+  <div class="control">
+    <label>Padding</label>
+    <input type="range" id="bgPad" min="0" max="2" value="0">
+    <span class="value">P = <span id="bgPadVal">0</span></span>
+  </div>
+  <div class="control">
+    <label>&nbsp;</label>
+    <button onclick="animateSlide()">▶ Animate sliding</button>
+  </div>
+</div>
+
+<div class="flex-row">
+  <div class="grid-container">
+    <div class="label">Input (with padding shown)</div>
+    <div class="grid" id="bgInput"></div>
+  </div>
+  <div class="step-arrow">⊛</div>
+  <div class="grid-container">
+    <div class="label">Kernel (2×2)</div>
+    <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="cell kernel-cell">+2</div>
+      <div class="cell kernel-cell">+2</div>
+      <div class="cell kernel-cell">+2</div>
+      <div class="cell kernel-cell">−6</div>
+    </div>
+  </div>
+  <div class="step-arrow">=</div>
+  <div class="grid-container">
+    <div class="label">Output</div>
+    <div class="grid" id="bgOutput"></div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-box" style="background: rgba(171, 71, 188, 0.45); border: 2px solid var(--kernel);"></div>Current kernel position</div>
+  <div class="legend-item"><div class="legend-box" style="background: var(--highlight);"></div>Output being computed</div>
+  <div class="legend-item"><div class="legend-box" style="background: rgba(96, 125, 139, 0.35); border: 1px dashed var(--text-dim);"></div>Padding (added zeros)</div>
+</div>
+
+</div>
+
+<!-- ============ Q1 ============ -->
+<div class="section" id="q1">
+<h2>§2 · Problem 1 — 2D Convolution by hand</h2>
+
+<p><strong>Setup:</strong> Apply the 2×2 kernel to two 3×3 feature maps with stride 1 and no padding. Then determine which patch contains the feature.</p>
+
+<h3>Step 1: Compute the output size</h3>
+<div class="formula">
+H<sub>out</sub> = ⌊ (3 + 2·0 − 2) / 1 ⌋ + 1 = 1 + 1 = <span class="accent2-text">2</span>
+</div>
+<p>So each output map is 2×2, with elements a₁, a₂, a₃, a₄ (in row-major order).</p>
+
+<h3>Step 2: Analyze the kernel before computing — what is it looking for?</h3>
+
+<div class="flex-row">
+  <div class="grid-container">
+    <div class="label">The kernel</div>
+    <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="cell positive">+2</div>
+      <div class="cell positive">+2</div>
+      <div class="cell positive">+2</div>
+      <div class="cell negative">−6</div>
+    </div>
+  </div>
+  <div style="max-width: 480px;">
+    <p>Three positions have weight <span class="pos-text">+2</span>, one position has weight <span class="neg-text">−6</span>. For the output to be strongly positive, the input region must have:</p>
+    <p>• <span class="pos-text">Large values</span> in the top-left, top-right, and bottom-left.<br>
+    • <span class="neg-text">Small (or negative) values</span> in the bottom-right.</p>
+    <p>This is a <span class="accent2-text">top-left corner detector</span> — it fires when there's a bright region with a dark corner in the bottom-right.</p>
+  </div>
+</div>
+
+<h3>Step 3: Convolve over Feature Map A</h3>
+
+<div class="flex-row">
+  <div class="grid-container">
+    <div class="label">Feature Map A</div>
+    <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="cell positive">1</div><div class="cell zero">0</div><div class="cell positive">1</div>
+      <div class="cell zero">0</div><div class="cell positive">3</div><div class="cell positive">2</div>
+      <div class="cell zero">0</div><div class="cell positive">4</div><div class="cell positive">1</div>
+    </div>
+  </div>
+  <div class="step-arrow">⊛</div>
+  <div class="grid-container">
+    <div class="label">Kernel</div>
+    <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="cell kernel-cell">+2</div><div class="cell kernel-cell">+2</div>
+      <div class="cell kernel-cell">+2</div><div class="cell kernel-cell">−6</div>
+    </div>
+  </div>
+  <div class="step-arrow">=</div>
+  <div class="grid-container">
+    <div class="label">Output A</div>
+    <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="cell negative">−16</div><div class="cell negative">−4</div>
+      <div class="cell negative">−18</div><div class="cell positive">+12</div>
+    </div>
+  </div>
+</div>
+
+<h4>Step-by-step computation for each output element</h4>
+
+<table class="calc">
+  <tr>
+    <th>Output</th>
+    <th>Input region (2×2)</th>
+    <th>Element-wise multiplication</th>
+    <th>Sum</th>
+  </tr>
+  <tr class="highlight-row">
+    <td><strong>a₁</strong> (top-left)</td>
+    <td>[[1, 0], [0, 3]]</td>
+    <td class="product">2·1 + 2·0 + 2·0 + (−6)·3<br>= 2 + 0 + 0 − 18</td>
+    <td class="sum">−16</td>
+  </tr>
+  <tr>
+    <td><strong>a₂</strong> (top-right)</td>
+    <td>[[0, 1], [3, 2]]</td>
+    <td class="product">2·0 + 2·1 + 2·3 + (−6)·2<br>= 0 + 2 + 6 − 12</td>
+    <td class="sum">−4</td>
+  </tr>
+  <tr>
+    <td><strong>a₃</strong> (bottom-left)</td>
+    <td>[[0, 3], [0, 4]]</td>
+    <td class="product">2·0 + 2·3 + 2·0 + (−6)·4<br>= 0 + 6 + 0 − 24</td>
+    <td class="sum">−18</td>
+  </tr>
+  <tr>
+    <td><strong>a₄</strong> (bottom-right)</td>
+    <td>[[3, 2], [4, 1]]</td>
+    <td class="product">2·3 + 2·2 + 2·4 + (−6)·1<br>= 6 + 4 + 8 − 6</td>
+    <td class="sum">+12</td>
+  </tr>
+</table>
+
+<h3>Step 4: Convolve over Feature Map B</h3>
+
+<div class="flex-row">
+  <div class="grid-container">
+    <div class="label">Feature Map B</div>
+    <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="cell positive">1</div><div class="cell zero">0</div><div class="cell positive">2</div>
+      <div class="cell positive">3</div><div class="cell positive">2</div><div class="cell positive">1</div>
+      <div class="cell negative">−2</div><div class="cell zero">0</div><div class="cell positive">1</div>
+    </div>
+  </div>
+  <div class="step-arrow">⊛</div>
+  <div class="grid-container">
+    <div class="label">Kernel</div>
+    <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="cell kernel-cell">+2</div><div class="cell kernel-cell">+2</div>
+      <div class="cell kernel-cell">+2</div><div class="cell kernel-cell">−6</div>
+    </div>
+  </div>
+  <div class="step-arrow">=</div>
+  <div class="grid-container">
+    <div class="label">Output B</div>
+    <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="cell negative">−4</div><div class="cell positive">+2</div>
+      <div class="cell positive">+6</div><div class="cell zero">0</div>
+    </div>
+  </div>
+</div>
+
+<table class="calc">
+  <tr>
+    <th>Output</th>
+    <th>Input region (2×2)</th>
+    <th>Element-wise multiplication</th>
+    <th>Sum</th>
+  </tr>
+  <tr>
+    <td><strong>b₁</strong></td>
+    <td>[[1, 0], [3, 2]]</td>
+    <td class="product">2·1 + 2·0 + 2·3 + (−6)·2 = 2 + 0 + 6 − 12</td>
+    <td class="sum">−4</td>
+  </tr>
+  <tr>
+    <td><strong>b₂</strong></td>
+    <td>[[0, 2], [2, 1]]</td>
+    <td class="product">2·0 + 2·2 + 2·2 + (−6)·1 = 0 + 4 + 4 − 6</td>
+    <td class="sum">+2</td>
+  </tr>
+  <tr>
+    <td><strong>b₃</strong></td>
+    <td>[[3, 2], [−2, 0]]</td>
+    <td class="product">2·3 + 2·2 + 2·(−2) + (−6)·0 = 6 + 4 − 4 − 0</td>
+    <td class="sum">+6</td>
+  </tr>
+  <tr>
+    <td><strong>b₄</strong></td>
+    <td>[[2, 1], [0, 1]]</td>
+    <td class="product">2·2 + 2·1 + 2·0 + (−6)·1 = 4 + 2 + 0 − 6</td>
+    <td class="sum">0</td>
+  </tr>
+</table>
+
+<h3>Step 5: Which map contains the feature?</h3>
+
+<div class="two-col">
+  <div class="diagram-box">
+    <h4>Map A response magnitudes</h4>
+    <p style="font-family: monospace;">|−16| + |−4| + |−18| + |+12| = <span class="accent2-text">50</span><br>
+    Mean absolute response: <span class="accent2-text">12.5</span></p>
+  </div>
+  <div class="diagram-box">
+    <h4>Map B response magnitudes</h4>
+    <p style="font-family: monospace;">|−4| + |+2| + |+6| + |0| = <span class="accent2-text">12</span><br>
+    Mean absolute response: <span class="accent2-text">3.0</span></p>
+  </div>
+</div>
+
+<div class="conclusion">
+<strong>Feature Map A</strong> contains the feature. Its responses are roughly <strong>4× larger</strong> in magnitude than Map B's. The kernel matches strongly somewhere in A.
+</div>
+
+<div class="question-box">
+"The output values are mostly negative — how can we say there's a feature?"<br><br>
+A negative response means the kernel matched but with <em>inverted polarity</em>. The kernel detects bright-top-left + dark-bottom-right patterns. A strong negative response means the opposite: dark-top-left + bright-bottom-right (an anti-pattern). Either way, the <strong>magnitude</strong> tells us a strong structured pattern exists. After a ReLU activation, negative responses would be clipped — but the unactivated magnitude is what the convolution layer alone produces.
+</div>
+</div>
+
+<!-- ============ Q2 ============ -->
+<div class="section" id="q2">
+<h2>§3 · Problem 2 — Padding and its side effects</h2>
+
+<p><strong>Setup:</strong> Take Feature Map B (the one without the feature), add zero-padding = 1, and convolve again. Observe what happens.</p>
+
+<h3>Step 1: Compute new output size</h3>
+<div class="formula">
+H<sub>out</sub> = ⌊ (3 + 2·1 − 2) / 1 ⌋ + 1 = 3 + 1 = <span class="accent2-text">4</span>
+</div>
+
+<h3>Step 2: Build the padded input</h3>
+
+<div class="flex-row">
+  <div class="grid-container">
+    <div class="label">Padded Input B (5×5)</div>
+    <div class="grid" id="paddedB" style="grid-template-columns: repeat(5, 1fr);"></div>
+  </div>
+  <div class="step-arrow">⊛</div>
+  <div class="grid-container">
+    <div class="label">Kernel</div>
+    <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="cell kernel-cell">+2</div><div class="cell kernel-cell">+2</div>
+      <div class="cell kernel-cell">+2</div><div class="cell kernel-cell">−6</div>
+    </div>
+  </div>
+  <div class="step-arrow">=</div>
+  <div class="grid-container">
+    <div class="label">Output (4×4)</div>
+    <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="cell negative">−6</div><div class="cell positive">+2</div><div class="cell negative">−12</div><div class="cell positive">+4</div>
+      <div class="cell negative">−16</div><div class="cell negative">−4</div><div class="cell positive">+2</div><div class="cell positive">+6</div>
+      <div class="cell highlight">+18</div><div class="cell positive">+6</div><div class="cell zero">0</div><div class="cell positive">+4</div>
+      <div class="cell negative">−4</div><div class="cell negative">−4</div><div class="cell positive">+2</div><div class="cell positive">+2</div>
+    </div>
+  </div>
+</div>
+
+<h3>Step 3: Investigate the suspicious +18 — where does it come from?</h3>
+
+<p>The largest response is +18 in row 3, column 1 of the output. Let's see what input region produced it. With padding 1, the kernel at output position (2, 0) sits over the padded input rows 2–3 and columns 0–1:</p>
+
+<div class="flex-row">
+  <div class="grid-container">
+    <div class="label">Region the kernel sees</div>
+    <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="cell padding">0</div><div class="cell positive">3</div>
+      <div class="cell padding">0</div><div class="cell negative">−2</div>
+    </div>
+  </div>
+  <div style="max-width: 500px;">
+    <p class="formula">+18 = 2·0 + 2·3 + 2·0 + (−6)·(−2)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = 0 + 6 + 0 + 12 = <span class="accent2-text">+18</span></p>
+    <p>The two zeros on the left are <strong>padding</strong> — they weren't in the original image. When combined with the original values <span class="pos-text">3</span> and <span class="neg-text">−2</span>, they look <em>just like</em> a top-left corner pattern to the kernel (left side bright vs. corner dark).</p>
+    <p>The kernel fired on a corner that <strong>did not exist</strong> in the original image.</p>
+  </div>
+</div>
+
+<h3>Step 4: Map out all the padding-induced responses</h3>
+
+<table class="calc">
+  <tr><th>Output position</th><th>Region (top-left corner)</th><th>Includes padding?</th><th>Result</th><th>Comment</th></tr>
+  <tr><td>(0, 0)</td><td>all-padding top-left</td><td>Yes (3 zeros)</td><td class="sum">−6</td><td>Artificial</td></tr>
+  <tr><td>(0, 2)</td><td>top edge</td><td>Yes (top row padding)</td><td class="sum">−12</td><td>Edge artifact</td></tr>
+  <tr><td class="highlight-row" colspan="5"><strong>(2, 0)</strong>: padding meets the −2, creating a strong fake corner → <strong>+18</strong></td></tr>
+  <tr><td>(1, 1)</td><td>fully interior</td><td>No</td><td class="sum">−4</td><td>Genuine response, matches Problem 1 result</td></tr>
+</table>
+
+<div class="why-box">
+Padding is not free. The zeros you insert at the border interact with real pixel values and can create <em>phantom features</em> the network sees but that don't exist in the data. In practice this matters less for trained networks (they learn to discount edges), but it's a real cost — and it's why alternatives like <strong>reflection padding</strong> or <strong>replication padding</strong> are sometimes used instead.
+</div>
+
+<div class="question-box">
+"Then why is zero-padding still the default in most CNN frameworks?"<br><br>
+Three reasons: (1) it's computationally simple — just allocate zeros, (2) it preserves the spatial dimensions cleanly so layer designs are predictable, and (3) the network learns to compensate during training. The trade-off is acceptable for most tasks, but for high-precision tasks like segmentation at boundaries, people switch to other padding modes.
+</div>
+
+<div class="conclusion">
+Padding's main purpose is to <strong>control output size</strong> (often to keep spatial dimensions equal to input, called a "same convolution"). But it always introduces some boundary artifact. The trade-off — losing spatial information at edges vs. introducing artifacts — is a design choice every architect makes.
+</div>
+</div>
+
+<!-- ============ Q3 ============ -->
+<div class="section" id="q3">
+<h2>§4 · Problem 3 — Multi-channel convolution</h2>
+
+<p><strong>Setup:</strong> A 2×2×2 kernel convolves with a 4×4×2 input using stride 2 and no padding. The challenge here isn't arithmetic — it's understanding <em>what channels mean</em>.</p>
+
+<div class="conclusion">
+<strong>The core principle students always miss:</strong><br>
+One filter has the same depth as the input (2 channels here), but produces <strong>one</strong> 2D output map. The channels are summed inside the filter. The number of output channels equals the <strong>number of filters</strong>, not the number of input channels.
+</div>
+
+<h3>Step 1: Visualize the setup</h3>
+
+<div class="flex-row" style="align-items: flex-start;">
+  <div class="channel-stack">
+    <div class="channel-label">Channel 1</div>
+    <div class="label">Input</div>
+    <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="cell positive">1</div><div class="cell zero">0</div><div class="cell positive">1</div><div class="cell positive">3</div>
+      <div class="cell zero">0</div><div class="cell positive">1</div><div class="cell positive">3</div><div class="cell positive">2</div>
+      <div class="cell positive">6</div><div class="cell zero">0</div><div class="cell positive">4</div><div class="cell positive">1</div>
+      <div class="cell positive">2</div><div class="cell positive">5</div><div class="cell positive">2</div><div class="cell positive">1</div>
+    </div>
+  </div>
+  <div class="channel-stack">
+    <div class="channel-label">Channel 2</div>
+    <div class="label">Input</div>
+    <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="cell zero">0</div><div class="cell positive">1</div><div class="cell positive">2</div><div class="cell positive">2</div>
+      <div class="cell positive">1</div><div class="cell positive">2</div><div class="cell positive">3</div><div class="cell zero">0</div>
+      <div class="cell positive">1</div><div class="cell positive">2</div><div class="cell zero">0</div><div class="cell positive">4</div>
+      <div class="cell positive">1</div><div class="cell positive">1</div><div class="cell zero">0</div><div class="cell positive">2</div>
+    </div>
+  </div>
+</div>
+
+<div class="flex-row" style="align-items: flex-start; margin-top: 30px;">
+  <div class="channel-stack">
+    <div class="channel-label" style="background: var(--kernel);">Kernel Ch 1</div>
+    <div class="label">2×2</div>
+    <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="cell kernel-cell">+2</div><div class="cell kernel-cell">+1</div>
+      <div class="cell kernel-cell">−1</div><div class="cell kernel-cell">−1</div>
+    </div>
+  </div>
+  <div class="channel-stack">
+    <div class="channel-label" style="background: var(--kernel);">Kernel Ch 2</div>
+    <div class="label">2×2</div>
+    <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="cell kernel-cell">−3</div><div class="cell kernel-cell">+1</div>
+      <div class="cell kernel-cell">+1</div><div class="cell kernel-cell">+1</div>
+    </div>
+  </div>
+</div>
+
+<h3>Step 2: Output size</h3>
+<div class="formula">
+H<sub>out</sub> = ⌊ (4 − 2) / 2 ⌋ + 1 = 1 + 1 = <span class="accent2-text">2</span>
+</div>
+<p>So we get a 2×2 output. Just <em>one</em> 2D map — not two. The channels collapse.</p>
+
+<h3>Step 3: Compute a₁ (top-left) — channel-by-channel breakdown</h3>
+
+<p>The kernel covers rows 0–1, columns 0–1. In each channel, compute the dot product, then add the two channel contributions together.</p>
+
+<div class="two-col">
+  <div class="diagram-box">
+    <h4>Channel 1 contribution</h4>
+    <p style="font-family: monospace;">Input region: [[1, 0], [0, 1]]<br>Kernel: [[+2, +1], [−1, −1]]</p>
+    <table class="calc">
+      <tr><th>Input</th><th>Kernel</th><th>Product</th></tr>
+      <tr><td>1</td><td>+2</td><td class="product">+2</td></tr>
+      <tr><td>0</td><td>+1</td><td class="product">0</td></tr>
+      <tr><td>0</td><td>−1</td><td class="product">0</td></tr>
+      <tr><td>1</td><td>−1</td><td class="product">−1</td></tr>
+      <tr class="highlight-row"><td colspan="2"><strong>Ch 1 sum</strong></td><td class="sum">+1</td></tr>
+    </table>
+  </div>
+  <div class="diagram-box">
+    <h4>Channel 2 contribution</h4>
+    <p style="font-family: monospace;">Input region: [[0, 1], [1, 2]]<br>Kernel: [[−3, +1], [+1, +1]]</p>
+    <table class="calc">
+      <tr><th>Input</th><th>Kernel</th><th>Product</th></tr>
+      <tr><td>0</td><td>−3</td><td class="product">0</td></tr>
+      <tr><td>1</td><td>+1</td><td class="product">+1</td></tr>
+      <tr><td>1</td><td>+1</td><td class="product">+1</td></tr>
+      <tr><td>2</td><td>+1</td><td class="product">+2</td></tr>
+      <tr class="highlight-row"><td colspan="2"><strong>Ch 2 sum</strong></td><td class="sum">+4</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="flex-row">
+  <div class="cell positive" style="font-size: 1.8em; padding: 18px;">+1</div>
+  <div class="step-arrow">+</div>
+  <div class="cell positive" style="font-size: 1.8em; padding: 18px;">+4</div>
+  <div class="step-eq">=</div>
+  <div class="cell highlight" style="font-size: 2em; padding: 22px;"><strong>a₁ = 5</strong></div>
+</div>
+
+<h3>Step 4: Compute remaining outputs</h3>
+
+<table class="calc">
+  <tr><th>Output</th><th>Position (rows, cols)</th><th>Ch 1 contribution</th><th>Ch 2 contribution</th><th>Total</th></tr>
+  <tr>
+    <td><strong>a₁</strong> (top-left)</td>
+    <td>(0–1, 0–1)</td>
+    <td class="product">2·1 + 1·0 − 1·0 − 1·1 = +1</td>
+    <td class="product">−3·0 + 1·1 + 1·1 + 1·2 = +4</td>
+    <td class="sum">+5</td>
+  </tr>
+  <tr>
+    <td><strong>a₂</strong> (top-right)</td>
+    <td>(0–1, 2–3)</td>
+    <td class="product">2·1 + 1·3 − 1·3 − 1·2 = 0</td>
+    <td class="product">−3·2 + 1·2 + 1·3 + 1·0 = −1</td>
+    <td class="sum">−1</td>
+  </tr>
+  <tr>
+    <td><strong>a₃</strong> (bottom-left)</td>
+    <td>(2–3, 0–1)</td>
+    <td class="product">2·6 + 1·0 − 1·2 − 1·5 = +5</td>
+    <td class="product">−3·1 + 1·2 + 1·1 + 1·1 = +1</td>
+    <td class="sum">+6</td>
+  </tr>
+  <tr>
+    <td><strong>a₄</strong> (bottom-right)</td>
+    <td>(2–3, 2–3)</td>
+    <td class="product">2·4 + 1·1 − 1·2 − 1·1 = +6</td>
+    <td class="product">−3·0 + 1·4 + 1·0 + 1·2 = +6</td>
+    <td class="sum">+12</td>
+  </tr>
+</table>
+
+<div class="flex-row">
+  <div class="grid-container">
+    <div class="label">Final output (1 channel, 2×2)</div>
+    <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="cell positive" style="font-size: 1.4em; padding: 16px;">+5</div>
+      <div class="cell negative" style="font-size: 1.4em; padding: 16px;">−1</div>
+      <div class="cell positive" style="font-size: 1.4em; padding: 16px;">+6</div>
+      <div class="cell positive" style="font-size: 1.4em; padding: 16px;">+12</div>
+    </div>
+  </div>
+</div>
+
+<div class="why-box">
+Think of it this way: a filter doesn't process channels separately and output separate channel responses. Instead, each filter is a single "feature detector" whose definition spans all input channels. To detect a "red-edge," you'd build a filter where Channel R has edge-detector weights and Channels G and B have small or zero weights. The summation across channels integrates all the color information into one decision.
+</div>
+
+<div class="question-box">
+"So how do we get multiple output channels?"<br><br>
+By using <strong>multiple filters</strong>. If you want 64 output channels, you build 64 separate filters (each of size 2×2×2 in our example). Each filter produces its own 2×2 output map, and you stack these into a 2×2×64 output tensor. This is exactly what the AlexNet parameter table is counting: <code>K × K × C<sub>in</sub> × C<sub>out</sub></code> — one set of K×K×C<sub>in</sub> weights per output channel.
+</div>
+</div>
+
+<!-- ============ Q4 ============ -->
+<div class="section" id="q4">
+<h2>§5 · Problem 4 — Counting FLOPs</h2>
+
+<p>This problem shows numerically <em>why</em> AlexNet's first layer uses stride 4. Let's derive the FLOP formula step by step, then play with the parameters.</p>
+
+<h3>Step 1: FLOPs per output pixel</h3>
+
+<div class="diagram-box">
+<p>To compute <strong>one element</strong> of the output:</p>
+<p><span class="step-indicator">1</span><strong>Multiplications:</strong> The kernel has C·k·k weights. Each is multiplied with one input value. → <span class="accent2-text">C·k² multiplications</span></p>
+<p><span class="step-indicator">2</span><strong>Additions:</strong> Adding n numbers takes n−1 additions (think: a+b is one operation, then +c, then +d, ...). → <span class="accent2-text">C·k² − 1 additions</span></p>
+<p><span class="step-indicator">3</span><strong>Total per pixel:</strong> 2C·k² − 1 FLOPs</p>
+</div>
+
+<h3>Step 2: Multiply by output pixel count</h3>
+
+<div class="formula">
+Total FLOPs (one filter) = (2Ck² − 1) × H<sub>out</sub> × W<sub>out</sub><br>
+Total FLOPs (full layer) = n<sub>filters</sub> × (2Ck² − 1) × H<sub>out</sub> × W<sub>out</sub>
+</div>
+
+<h3>Step 3: Part (b) — AlexNet conv1 with stride 1, no padding</h3>
+
+<div class="diagram-box">
+<p><strong>Given:</strong> C = 3, H = W = 224, k = 11, n = 64, S = 1, P = 0</p>
+<p><strong>Output size:</strong> (224 − 11 + 0)/1 + 1 = 214</p>
+<p><strong>FLOPs per filter:</strong></p>
+<p style="font-family: monospace; padding-left: 20px;">
+(2 · 3 · 11² − 1) × 214² <br>
+= (726 − 1) × 45,796<br>
+≈ 2 · 3 · 121 · 214² &nbsp;&nbsp;(approximately, ignoring the −1)<br>
+= <span class="accent2-text">33,202,100 FLOPs ≈ 33M</span></p>
+<p><strong>For 64 filters:</strong> 64 × 33M = <span class="accent2-text">2,124,934,400 ≈ 2.1G FLOPs</span></p>
+</div>
+
+<h3>Step 4: Part (c) — AlexNet conv1 with stride 4, padding 2</h3>
+
+<div class="diagram-box">
+<p><strong>Output size:</strong> ⌊(224 − 11 + 4)/4⌋ + 1 = ⌊217/4⌋ + 1 = 54 + 1 = <span class="accent-text">55</span></p>
+<p><strong>FLOPs per filter:</strong></p>
+<p style="font-family: monospace; padding-left: 20px;">
+(2 · 3 · 11² − 1) × 55² <br>
+= 725 × 3,025<br>
+= <span class="accent2-text">2,193,125 ≈ 2.2M FLOPs</span></p>
+<p><strong>For 64 filters:</strong> 64 × 2.2M = <span class="accent2-text">140,360,000 ≈ 140M FLOPs</span></p>
+</div>
+
+<div class="conclusion">
+By changing stride from 1 to 4, we dropped from <strong>2.1G to 140M FLOPs</strong> — roughly a <strong>15× reduction</strong>. This is why AlexNet's first layer uses aggressive striding: the early layers operate on full-resolution input, where computation is most expensive.
+</div>
+
+<h3>Step 5: Interactive — explore the trade-off</h3>
+
+<p>Use the sliders below to see how stride, padding, and kernel size affect output size and FLOPs in real time.</p>
+
+<div class="controls">
+  <div class="control">
+    <label>Stride S</label>
+    <input type="range" id="strideSlider" min="1" max="8" value="4">
+    <span class="value">S = <span id="strideVal">4</span></span>
+  </div>
+  <div class="control">
+    <label>Padding P</label>
+    <input type="range" id="padSlider" min="0" max="5" value="2">
+    <span class="value">P = <span id="padVal">2</span></span>
+  </div>
+  <div class="control">
+    <label>Kernel size K</label>
+    <input type="range" id="kSlider" min="3" max="15" step="2" value="11">
+    <span class="value">K = <span id="kVal">11</span></span>
+  </div>
+  <div class="control">
+    <label>Number of filters</label>
+    <input type="range" id="nFilters" min="16" max="256" step="16" value="64">
+    <span class="value">N = <span id="nFiltersVal">64</span></span>
+  </div>
+</div>
+
+<div class="metric-display">
+  <span class="metric-label">Input:</span> 3 × 224 × 224<br>
+  <span class="metric-label">Output spatial size:</span> <span id="outSize" class="metric-big">55 × 55</span><br>
+  <span class="metric-label">FLOPs per filter:</span> <span id="perFilter" class="metric-big">2.19M</span><br>
+  <span class="metric-label">Total layer FLOPs:</span> <span id="totalFlops" class="metric-big">140M</span><br>
+  <span class="metric-label">Baseline (S=1, P=0):</span> <span id="baselineFlops">2.13G</span> FLOPs <span class="metric-label">→ savings: <span id="savings" class="accent2-text">15×</span></span>
+</div>
+
+<div class="question-box">
+"If padding adds pixels and stride removes them, don't they just cancel out?"<br><br>
+No, they serve different purposes:<br>
+<strong>Padding</strong> recovers information at the borders so edge pixels are seen by the filter multiple times. Without padding, the corner pixel is touched only once; with padding, it appears in several filter positions.<br>
+<strong>Stride</strong> deliberately skips positions to downsample. It throws away spatial information to save computation.<br>
+In AlexNet's conv1, padding 2 brings the effective input to 228×228, then stride 4 samples 55 positions across — using more of the border information while still aggressively downsampling.
+</div>
+</div>
+
+<!-- ============ Q5 ============ -->
+<div class="section" id="q5">
+<h2>§6 · Problem 5 — Backpropagation through a conv layer</h2>
+
+<p>This is the most challenging problem, but the core message is simple: <strong>backprop is just the chain rule applied carefully</strong>. We'll walk through the 1D case so the structure is crystal clear.</p>
+
+<h3>Step 1: The setup</h3>
+
+<div class="flex-row">
+  <div class="grid-container">
+    <div class="label">Input x (length 6)</div>
+    <div class="grid" style="grid-template-columns: repeat(6, 1fr);">
+      <div class="cell">A</div><div class="cell">B</div><div class="cell">C</div>
+      <div class="cell">D</div><div class="cell">E</div><div class="cell">F</div>
+    </div>
+  </div>
+  <div class="step-arrow">⊛</div>
+  <div class="grid-container">
+    <div class="label">Weight w (length 2)</div>
+    <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+      <div class="cell kernel-cell">Y</div><div class="cell kernel-cell">Z</div>
+    </div>
+  </div>
+</div>
+
+<h3>Step 2: Part (a) — Forward pass with stride 1, padding 0</h3>
+
+<div class="formula">
+Output length = (6 − 2)/1 + 1 = 5
+</div>
+
+<div class="diagram-box">
+<p style="font-family: monospace;">
+z[0] = Y·A + Z·B<br>
+z[1] = Y·B + Z·C<br>
+z[2] = Y·C + Z·D<br>
+z[3] = Y·D + Z·E<br>
+z[4] = Y·E + Z·F
+</p>
+</div>
+
+<h3>Step 3: Part (b) — Forward pass with stride 2, padding 0</h3>
+
+<div class="formula">
+Output length = (6 − 2)/2 + 1 = 3
+</div>
+
+<div class="diagram-box">
+<p style="font-family: monospace;">
+z[0] = Y·A + Z·B&nbsp;&nbsp;&nbsp;&nbsp;(kernel at position 0)<br>
+z[1] = Y·C + Z·D&nbsp;&nbsp;&nbsp;&nbsp;(kernel at position 2)<br>
+z[2] = Y·E + Z·F&nbsp;&nbsp;&nbsp;&nbsp;(kernel at position 4)
+</p>
+</div>
+
+<p>Notice the kernel only touches inputs in non-overlapping pairs because stride = kernel size. Some inputs (B, D, F) are touched once, just like A, C, E.</p>
+
+<h3>Step 4: Part (c) — Compute ∂L/∂Y using the chain rule</h3>
+
+<div class="why-box">
+Y is a single weight, but it appears in <em>every</em> output element z[0], z[1], z[2]. Changing Y changes all three outputs simultaneously, and each output then affects the loss. The chain rule must sum over <strong>every path</strong> from Y to L.
+</div>
+
+<h4>The path diagram</h4>
+<div class="diagram-box" style="text-align: center; font-family: monospace; padding: 22px;">
+<p style="font-size: 1.1em;">
+Y ──→ z[0] ──→ L<br>
+&nbsp;├──→ z[1] ──→ L<br>
+&nbsp;└──→ z[2] ──→ L
+</p>
+<p style="color: var(--text-dim);">Y reaches the loss through three intermediate variables. We sum their contributions.</p>
+</div>
+
+<div class="formula">
+∂L/∂Y = ∂L/∂z[0] · ∂z[0]/∂Y &nbsp;+&nbsp; ∂L/∂z[1] · ∂z[1]/∂Y &nbsp;+&nbsp; ∂L/∂z[2] · ∂z[2]/∂Y
+</div>
+
+<h4>Compute each ∂z[i]/∂Y</h4>
+
+<table class="calc">
+  <tr><th>Output</th><th>Formula</th><th>∂z[i]/∂Y</th><th>Why</th></tr>
+  <tr><td>z[0]</td><td>Y·A + Z·B</td><td class="product">A</td><td>Y is multiplied with A; the partial isolates that term</td></tr>
+  <tr><td>z[1]</td><td>Y·C + Z·D</td><td class="product">C</td><td>Y is multiplied with C</td></tr>
+  <tr><td>z[2]</td><td>Y·E + Z·F</td><td class="product">E</td><td>Y is multiplied with E</td></tr>
+</table>
+
+<h4>Plug in</h4>
+
+<div class="conclusion">
+∂L/∂Y = <span class="accent2-text">A</span>·∂L/∂z[0] + <span class="accent2-text">C</span>·∂L/∂z[1] + <span class="accent2-text">E</span>·∂L/∂z[2]
+</div>
+
+<p>The upstream gradients (∂L/∂z[i]) come <em>from the next layer up</em> during backprop — they were computed before we got here. Our job in this layer is to combine them with the local partials.</p>
+
+<h3>Step 5: Part (d) — Compute ∂L/∂B</h3>
+
+<p>Now we go after the input gradient. We need to know: which output(s) does B appear in?</p>
+
+<div class="diagram-box">
+<p>Looking at the stride-2 outputs:</p>
+<p style="font-family: monospace;">
+z[0] = Y·A + Z·B&nbsp;&nbsp;&nbsp;&nbsp;<span class="accent-text">← B appears here</span><br>
+z[1] = Y·C + Z·D&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: var(--text-dim);">(no B)</span><br>
+z[2] = Y·E + Z·F&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: var(--text-dim);">(no B)</span>
+</p>
+</div>
+
+<p>So B has only <strong>one path</strong> to the loss, via z[0]. The chain rule has a single term:</p>
+
+<div class="formula">
+∂L/∂B = ∂L/∂z[0] · ∂z[0]/∂B = <span class="accent2-text">Z</span> · ∂L/∂z[0]
+</div>
+
+<div class="question-box">
+"What if stride were 1? Would B have appeared in more outputs?"<br><br>
+Yes! With stride 1 and kernel length 2, B appears in <em>two</em> outputs: z[0] = Y·A + Z·B and z[1] = Y·B + Z·C. Then ∂L/∂B = Z·∂L/∂z[0] + Y·∂L/∂z[1]. The stride directly controls how many outputs each input contributes to, which controls how many gradient terms get summed in backprop.
+</div>
+
+<h3>Step 6: Two beautiful patterns to leave students with</h3>
+
+<div class="conclusion" style="margin-bottom: 16px;">
+<strong>Pattern 1: weight gradients = convolution of input with upstream gradient.</strong>
+<br><br>
+Look at ∂L/∂Y = A·∂L/∂z[0] + C·∂L/∂z[1] + E·∂L/∂z[2]. The inputs A, C, E (in stride-2 positions) are multiplied with the corresponding upstream gradients and summed. This is itself a convolution-like operation. Hence the saying: <em>"backprop through a conv layer is another conv."</em>
+</div>
+
+<div class="conclusion">
+<strong>Pattern 2: weights are shared, so their gradients accumulate.</strong>
+<br><br>
+Because Y is used at every output position, its gradient is a sum of many terms — one per output. This <strong>parameter sharing</strong> is the heart of why CNNs can learn so efficiently: a single weight gets updated based on evidence from many spatial locations.
+</div>
+</div>
+
+<!-- ============ SYNTHESIS ============ -->
+<div class="section" id="alexnet">
+<h2>§7 · Synthesis — Everything we learned, inside AlexNet</h2>
+
+<p>Let's now look at the AlexNet table from the notes and identify which problem each design choice traces back to.</p>
+
+<table class="calc">
+  <tr>
+    <th>Layer</th><th>K</th><th>S</th><th>P</th>
+    <th>Input</th><th>Output</th>
+    <th>Concept</th>
+  </tr>
+  <tr>
+    <td><strong>Conv1</strong></td>
+    <td>11×11</td><td>4</td><td>0</td>
+    <td>227²×3</td><td>55²×96</td>
+    <td>Aggressive stride → Problem 4: huge FLOP reduction</td>
+  </tr>
+  <tr>
+    <td>MaxPool1</td><td>3×3</td><td>2</td><td>0</td>
+    <td>55²×96</td><td>27²×96</td>
+    <td>Pooling: reduce spatial without learning</td>
+  </tr>
+  <tr>
+    <td><strong>Conv2</strong></td>
+    <td>5×5</td><td>1</td><td>2</td>
+    <td>27²×96</td><td>27²×256</td>
+    <td>Same-conv via padding → Problem 2</td>
+  </tr>
+  <tr>
+    <td>MaxPool2</td><td>3×3</td><td>2</td><td>0</td>
+    <td>27²×256</td><td>13²×256</td>
+    <td>Further downsampling</td>
+  </tr>
+  <tr>
+    <td><strong>Conv3</strong></td>
+    <td>3×3</td><td>1</td><td>1</td>
+    <td>13²×256</td><td>13²×384</td>
+    <td>Small kernel stacking — modern design</td>
+  </tr>
+  <tr>
+    <td><strong>Conv4</strong></td>
+    <td>3×3</td><td>1</td><td>1</td>
+    <td>13²×384</td><td>13²×384</td>
+    <td>Multi-channel conv → Problem 3</td>
+  </tr>
+  <tr>
+    <td><strong>Conv5</strong></td>
+    <td>3×3</td><td>1</td><td>1</td>
+    <td>13²×384</td><td>13²×256</td>
+    <td>Channels decrease before pooling</td>
+  </tr>
+</table>
+
+<h3>Parameter count verification</h3>
+
+<p>The parameter formula from the notes is:</p>
+
+<div class="formula">
+Parameters per layer = (K<sub>H</sub> × K<sub>W</sub> × C<sub>in</sub>) × C<sub>out</sub> + C<sub>out</sub>
+</div>
+
+<p>Let's verify Conv1: (11 × 11 × 3) × 96 + 96 = 121 × 3 × 96 + 96 = 34,848 + 96 = <strong>34,944</strong>. Matches the notes exactly. Compare to the 154 million for a single MLP layer at the start of this lecture — Conv1 is over 4,000× smaller.</p>
+
+<h3>The big picture</h3>
+
+<div class="question-box">
+"Why is Conv1 alone allowed to use a huge 11×11 kernel, but every later layer uses 3×3?"<br><br>
+Two reasons, both about efficiency:<br>
+<br>
+<strong>Receptive field at low cost.</strong> Stacking two 3×3 convolutions gives the same receptive field as one 5×5 (each pixel in the second layer sees a 5×5 neighborhood of the input). Three stacked 3×3 layers match a 7×7 receptive field. But the parameter count is much smaller: two 3×3 layers have 2·9 = 18 weights per channel, while one 5×5 layer has 25.<br>
+<br>
+<strong>More nonlinearities.</strong> Each conv layer is followed by ReLU, so stacking 3×3 layers gives the network more places to apply nonlinearity, increasing its representational power.<br>
+<br>
+Conv1 is an exception because input images have only 3 channels, so 11×11×3 is still cheap, and the goal there is to capture coarse low-level structure (edges, gradients) at large spatial scale.
+</div>
+
+<div class="conclusion">
+The five problems we worked through aren't just exercises — they are the five fundamental design decisions inside every CNN:
+<br><br>
+<strong>1. Kernel as feature detector</strong> (Problem 1) — what the filter learns to look for<br>
+<strong>2. Padding</strong> (Problem 2) — how to handle boundaries<br>
+<strong>3. Multi-channel summation</strong> (Problem 3) — how to integrate information across channels<br>
+<strong>4. Stride and FLOPs</strong> (Problem 4) — how to balance accuracy and speed<br>
+<strong>5. Backprop</strong> (Problem 5) — how the network learns from data<br>
+<br>
+Master these five and you understand the engine driving every modern vision architecture, from AlexNet through ResNet to today's hybrid transformer-conv models.
+</div>
+</div>
+
+<script>
+// =================================================================
+// Data
+// =================================================================
+const inputA = [[1,0,1],[0,3,2],[0,4,1]];
+const inputB = [[1,0,2],[3,2,1],[-2,0,1]];
+
+// =================================================================
+// MLP cost calculator
+// =================================================================
+function updateMLP() {
+  const H = parseInt(document.getElementById('mlpH').value);
+  const C = parseInt(document.getElementById('mlpC').value);
+  const out = parseInt(document.getElementById('mlpOut').value);
+  document.getElementById('mlpHVal').textContent = H;
+  document.getElementById('mlpCVal').textContent = C;
+  document.getElementById('mlpOutVal').textContent = out;
+  const inPx = H * H * C;
+  const params = inPx * out + out;
+  const memMB = params * 4 / (1024 * 1024);
+  document.getElementById('mlpInPx').textContent = inPx.toLocaleString();
+  document.getElementById('mlpParams').textContent = params.toLocaleString();
+  document.getElementById('mlpMem').textContent = memMB.toFixed(1) + ' MB';
+}
+['mlpH','mlpC','mlpOut'].forEach(id =>
+  document.getElementById(id).addEventListener('input', updateMLP)
+);
+updateMLP();
+
+// =================================================================
+// Padded B grid renderer
+// =================================================================
+const paddedB = [
+  [null, null, null, null, null],
+  [null, 1, 0, 2, null],
+  [null, 3, 2, 1, null],
+  [null, -2, 0, 1, null],
+  [null, null, null, null, null]
+];
+function renderPaddedB() {
+  const el = document.getElementById('paddedB');
+  el.innerHTML = '';
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      const v = paddedB[r][c];
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      if (v === null) {
+        cell.classList.add('padding');
+        cell.textContent = '0';
+      } else {
+        if (v > 0) cell.classList.add('positive');
+        else if (v < 0) cell.classList.add('negative');
+        else cell.classList.add('zero');
+        cell.textContent = v;
+      }
+      el.appendChild(cell);
+    }
+  }
+}
+renderPaddedB();
+
+// =================================================================
+// Background sliding window animation
+// =================================================================
+const bgInputData = [[1,0,1],[0,3,2],[0,4,1]];
+let bgCurrentStep = -1;
+let bgPositions = [];
+
+function buildBgInput() {
+  const stride = parseInt(document.getElementById('bgStride').value);
+  const pad = parseInt(document.getElementById('bgPad').value);
+  document.getElementById('bgStrideVal').textContent = stride;
+  document.getElementById('bgPadVal').textContent = pad;
+  const inputEl = document.getElementById('bgInput');
+  inputEl.innerHTML = '';
+
+  const N = 3 + 2 * pad;
+  inputEl.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
+
+  const grid = [];
+  for (let r = 0; r < N; r++) {
+    const row = [];
+    for (let c = 0; c < N; c++) {
+      if (r < pad || r >= 3 + pad || c < pad || c >= 3 + pad) {
+        row.push(null);
+      } else {
+        row.push(bgInputData[r - pad][c - pad]);
+      }
+    }
+    grid.push(row);
+  }
+
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const v = grid[r][c];
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      if (v === null) {
+        cell.classList.add('padding');
+        cell.textContent = '0';
+      } else {
+        if (v > 0) cell.classList.add('positive');
+        else if (v < 0) cell.classList.add('negative');
+        else cell.classList.add('zero');
+        cell.textContent = v;
+      }
+      inputEl.appendChild(cell);
+    }
+  }
+
+  // Compute output positions
+  const Hout = Math.floor((N - 2) / stride) + 1;
+  const outputEl = document.getElementById('bgOutput');
+  outputEl.innerHTML = '';
+  outputEl.style.gridTemplateColumns = `repeat(${Hout}, 1fr)`;
+  bgPositions = [];
+
+  const kernel = [[2, 2], [2, -6]];
+  for (let oR = 0; oR < Hout; oR++) {
+    for (let oC = 0; oC < Hout; oC++) {
+      const r0 = oR * stride;
+      const c0 = oC * stride;
+      let sum = 0;
+      for (let i = 0; i < 2; i++) {
+        for (let j = 0; j < 2; j++) {
+          const v = grid[r0 + i][c0 + j];
+          sum += (v === null ? 0 : v) * kernel[i][j];
+        }
+      }
+      bgPositions.push({ inputR: r0, inputC: c0, outputIdx: oR * Hout + oC, value: sum });
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.idx = oR * Hout + oC;
+      if (sum > 0) cell.classList.add('positive');
+      else if (sum < 0) cell.classList.add('negative');
+      else cell.classList.add('zero');
+      cell.textContent = sum;
+      outputEl.appendChild(cell);
+    }
+  }
+}
+
+function highlightBgStep(step) {
+  document.querySelectorAll('#bgInput .cell').forEach(c => c.classList.remove('kernel-overlay'));
+  document.querySelectorAll('#bgOutput .cell').forEach(c => c.classList.remove('highlight'));
+  if (step < 0 || step >= bgPositions.length) return;
+  const pos = bgPositions[step];
+  for (let i = 0; i < 2; i++) {
+    for (let j = 0; j < 2; j++) {
+      const r = pos.inputR + i;
+      const c = pos.inputC + j;
+      const cell = document.querySelector(`#bgInput .cell[data-r="${r}"][data-c="${c}"]`);
+      if (cell) cell.classList.add('kernel-overlay');
+    }
+  }
+  const out = document.querySelector(`#bgOutput .cell[data-idx="${pos.outputIdx}"]`);
+  if (out) out.classList.add('highlight');
+}
+
+function animateSlide() {
+  bgCurrentStep = 0;
+  highlightBgStep(bgCurrentStep);
+  const interval = setInterval(() => {
+    bgCurrentStep++;
+    if (bgCurrentStep >= bgPositions.length) {
+      clearInterval(interval);
+      setTimeout(() => {
+        document.querySelectorAll('#bgInput .cell').forEach(c => c.classList.remove('kernel-overlay'));
+        document.querySelectorAll('#bgOutput .cell').forEach(c => c.classList.remove('highlight'));
+      }, 800);
+      return;
+    }
+    highlightBgStep(bgCurrentStep);
+  }, 700);
+}
+
+['bgStride', 'bgPad'].forEach(id =>
+  document.getElementById(id).addEventListener('input', buildBgInput)
+);
+buildBgInput();
+
+// =================================================================
+// AlexNet FLOPs calculator
+// =================================================================
+function updateFLOPs() {
+  const S = parseInt(document.getElementById('strideSlider').value);
+  const P = parseInt(document.getElementById('padSlider').value);
+  const K = parseInt(document.getElementById('kSlider').value);
+  const N = parseInt(document.getElementById('nFilters').value);
+  document.getElementById('strideVal').textContent = S;
+  document.getElementById('padVal').textContent = P;
+  document.getElementById('kVal').textContent = K;
+  document.getElementById('nFiltersVal').textContent = N;
+
+  const H_in = 224;
+  const C = 3;
+  const H_out = Math.floor((H_in - K + 2 * P) / S) + 1;
+  if (H_out <= 0) {
+    document.getElementById('outSize').textContent = 'invalid';
+    document.getElementById('perFilter').textContent = '—';
+    document.getElementById('totalFlops').textContent = '—';
+    return;
+  }
+  const flopsPerPixel = 2 * C * K * K - 1;
+  const flopsPerFilter = flopsPerPixel * H_out * H_out;
+  const totalFlops = flopsPerFilter * N;
+  document.getElementById('outSize').textContent = `${H_out} × ${H_out}`;
+  document.getElementById('perFilter').textContent = formatFlops(flopsPerFilter);
+  document.getElementById('totalFlops').textContent = formatFlops(totalFlops);
+
+  const H_base = H_in - K + 1;
+  const baseFlops = flopsPerPixel * H_base * H_base * N;
+  document.getElementById('baselineFlops').textContent = formatFlops(baseFlops);
+  const ratio = baseFlops / totalFlops;
+  document.getElementById('savings').textContent = ratio.toFixed(1) + '×';
+}
+function formatFlops(n) {
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + 'G';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
+  return n.toString();
+}
+['strideSlider', 'padSlider', 'kSlider', 'nFilters'].forEach(id =>
+  document.getElementById(id).addEventListener('input', updateFLOPs)
+);
+updateFLOPs();
+</script>
+
+</div>
+</body>
+</html>
